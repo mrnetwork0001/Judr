@@ -1,0 +1,1097 @@
+/*
+ * Landing page styles.
+ *
+ * Shares the app's tokens from globals.css — same near-black ground, same gold
+ * — so arriving at /app feels like walking further into the same building
+ * rather than through a door onto a different street. What changes is register:
+ * the display serif, far more air, and the product shown as specimens on a page
+ * rather than as a working dashboard.
+ */
+
+.lp {
+  --gutter: 20px;
+  --measure: 1280px;
+  --display: var(--font-display), ui-serif, Georgia, serif;
+}
+
+@media (min-width: 640px) {
+  .lp {
+    --gutter: 32px;
+  }
+}
+
+.lp-wrap {
+  width: 100%;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+
+/* ---------------------------------------------------------------- */
+/* Motifs                                                            */
+/* ---------------------------------------------------------------- */
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.numeral {
+  font-family: var(--display);
+  font-size: 44px;
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.figcaption {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-faint);
+}
+
+.figcaption .fig {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-family: var(--display);
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+/* A hairline that lifts into the scales of the Judr mark. Decorative. */
+.scale-rule {
+  display: flex;
+  align-items: center;
+  color: var(--border-strong);
+}
+
+.scale-rule span {
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+}
+
+.scale-rule svg {
+  flex-shrink: 0;
+  width: 56px;
+  height: 28px;
+  /* The beam sits on the glyph's midline, so the flanking rules meet it. */
+  margin-inline: 2px;
+}
+
+/* ---------------------------------------------------------------- */
+/* Type                                                              */
+/* ---------------------------------------------------------------- */
+
+.lp h1,
+.lp h2,
+.lp h3 {
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.lp h1 {
+  font-size: clamp(2.5rem, 6vw, 4.15rem);
+  line-height: 1.04;
+  text-wrap: balance;
+}
+
+.lp h2 {
+  font-size: clamp(2rem, 4.4vw, 3.1rem);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.lp h3 {
+  font-size: clamp(1.3rem, 2.4vw, 1.65rem);
+  line-height: 1.25;
+}
+
+.lp em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.lead {
+  font-size: clamp(1rem, 1.5vw, 1.18rem);
+  line-height: 1.65;
+  color: var(--text-dim);
+  max-width: 58ch;
+}
+
+.prose {
+  line-height: 1.68;
+  color: var(--text-dim);
+  max-width: 62ch;
+}
+
+/* ---------------------------------------------------------------- */
+/* Motion — one rise on load, honoured only if motion is welcome     */
+/* ---------------------------------------------------------------- */
+
+.rise {
+  animation: rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/*
+ * The tilt rides through the animation as a custom property. An earlier version
+ * ended on `transform: none`, which silently cancelled the rotation the moment
+ * the animation settled.
+ */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) rotate(var(--tilt, 0deg));
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--tilt, 0deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp *,
+  .lp *::before,
+  .lp *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Nav                                                               */
+/* ---------------------------------------------------------------- */
+
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.lp-nav.scrolled {
+  border-bottom-color: var(--border);
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+}
+
+.lp-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 66px;
+}
+
+.lp-nav nav {
+  display: none;
+  align-items: center;
+  gap: 32px;
+}
+
+@media (min-width: 900px) {
+  .lp-nav nav {
+    display: flex;
+  }
+}
+
+.lp-nav nav a {
+  font-size: 14px;
+  color: var(--text-dim);
+  text-decoration: none;
+  text-underline-offset: 7px;
+  transition: color 0.15s;
+}
+
+.lp-nav nav a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.nav-tail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-raised);
+  color: var(--text-dim);
+}
+
+@media (min-width: 900px) {
+  .menu-btn {
+    display: none;
+  }
+}
+
+.lp-menu {
+  border-top: 1px solid var(--border);
+}
+
+@media (min-width: 900px) {
+  .lp-menu {
+    display: none;
+  }
+}
+
+.lp-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 14px;
+}
+
+.lp-menu li + li {
+  border-top: 1px solid var(--border);
+}
+
+.lp-menu a {
+  display: block;
+  padding: 14px 0;
+  font-family: var(--display);
+  font-size: 22px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------- */
+/* Wordmark                                                          */
+/* ---------------------------------------------------------------- */
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.wordmark svg {
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+}
+
+.wordmark b {
+  font-family: var(--display);
+  font-size: 25px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* ---------------------------------------------------------------- */
+/* Buttons                                                           */
+/* ---------------------------------------------------------------- */
+
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.lp-btn.sm {
+  height: 38px;
+  padding: 0 15px;
+  font-size: 14px;
+}
+
+.lp-btn.accent {
+  background: var(--accent);
+  color: #1a1403;
+  font-weight: 600;
+}
+
+.lp-btn.accent:hover {
+  background: #e4b455;
+}
+
+.lp-btn.secondary {
+  background: var(--bg-raised);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.lp-btn.secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- */
+/* Sections                                                          */
+/* ---------------------------------------------------------------- */
+
+.section {
+  border-top: 1px solid var(--border);
+  padding-block: clamp(64px, 9vw, 116px);
+  scroll-margin-top: 80px;
+}
+
+.section.sunken {
+  background: var(--bg-sunken);
+}
+
+.section-head {
+  max-width: 44ch;
+}
+
+.section-head h2 {
+  margin-top: 14px;
+}
+
+.section-head .lead {
+  margin-top: 18px;
+}
+
+/* Sticky left column, scrolling right column. */
+.split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+}
+
+@media (min-width: 1000px) {
+  .split {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+    gap: 64px;
+    align-items: start;
+  }
+  .split > .section-head {
+    position: sticky;
+    top: 104px;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Hero                                                              */
+/* ---------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  padding-block: clamp(44px, 6vw, 84px) clamp(64px, 9vw, 112px);
+}
+
+/* A faint dot grid, faded out downward — the ledger paper under everything. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, black 45%, transparent);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 56px;
+  align-items: start;
+}
+
+@media (min-width: 1000px) {
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 48px;
+  }
+}
+
+.hero h1 {
+  margin-top: 20px;
+}
+
+.hero .lead {
+  margin-top: 24px;
+}
+
+.hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.assurances {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin: 40px 0 0;
+  padding-top: 26px;
+  border-top: 1px solid var(--border-strong);
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.assurances li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.assurances svg {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  margin-top: 4px;
+  color: var(--ok);
+}
+
+/* The specimen pile: fragments laid out like papers on a desk. */
+.vignette {
+  position: relative;
+  isolation: isolate;
+  margin: 0;
+}
+
+.vignette::before {
+  content: "";
+  position: absolute;
+  inset: 24px -14px 28px;
+  z-index: -1;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--bg-raised) 55%, transparent);
+}
+
+.vignette-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 560px) {
+  .vignette-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  .vignette-col {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .vignette-col.offset {
+    padding-top: 44px;
+  }
+  .tilt-a { --tilt: -1.6deg; }
+  .tilt-b { --tilt: 1.1deg; margin-left: 10px; }
+  .tilt-c { --tilt: 1deg; }
+  .tilt-d { --tilt: -1deg; margin-left: -16px; }
+}
+
+/* ---------------------------------------------------------------- */
+/* Steps                                                             */
+/* ---------------------------------------------------------------- */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border-strong);
+}
+
+.steps > li {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  padding-block: 40px;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+@media (min-width: 620px) {
+  .steps > li {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 28px;
+    padding-block: 48px;
+  }
+}
+
+.steps h3 {
+  margin-bottom: 12px;
+}
+
+.steps .specimen {
+  margin-top: 26px;
+  max-width: 520px;
+}
+
+/* ---------------------------------------------------------------- */
+/* Cards                                                             */
+/* ---------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 48px;
+}
+
+.card {
+  background: var(--bg-raised);
+  padding: 26px 24px;
+}
+
+.card h3 {
+  font-size: 1.22rem;
+  margin: 14px 0 10px;
+}
+
+.card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-dim);
+}
+
+.card .rune {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- */
+/* Graph diagram                                                     */
+/* ---------------------------------------------------------------- */
+
+.graph {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+  padding: 28px 24px;
+  overflow-x: auto;
+}
+
+.graph svg {
+  display: block;
+  min-width: 620px;
+  width: 100%;
+  height: auto;
+}
+
+.graph .node-box {
+  fill: var(--bg-raised);
+  stroke: var(--border-strong);
+}
+
+.graph .node-box.det {
+  stroke: color-mix(in srgb, var(--ok) 55%, transparent);
+}
+
+.graph .node-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  fill: var(--text);
+}
+
+.graph .node-kind {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  fill: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.graph .edge {
+  stroke: var(--border-strong);
+  stroke-width: 1.2;
+  fill: none;
+}
+
+.graph-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 20px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.graph-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.graph-key i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-raised);
+}
+
+.graph-key i.det {
+  border-color: color-mix(in srgb, var(--ok) 60%, transparent);
+}
+
+/* ---------------------------------------------------------------- */
+/* Built with                                                        */
+/* ---------------------------------------------------------------- */
+
+.stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+  margin-top: 44px;
+}
+
+.stack dt {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.stack dd {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------- */
+/* Closing                                                           */
+/* ---------------------------------------------------------------- */
+
+.closing {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--bg-sunken);
+  border-top: 1px solid var(--border);
+  padding-block: clamp(72px, 10vw, 128px);
+}
+
+.closing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 70% 100% at 50% 0%,
+    color-mix(in srgb, var(--accent) 9%, transparent),
+    transparent
+  );
+}
+
+.closing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+  align-items: end;
+}
+
+@media (min-width: 1000px) {
+  .closing-grid {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    gap: 48px;
+  }
+}
+
+.closing .lp-btn {
+  height: 52px;
+  font-size: 16px;
+}
+
+.closing-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (min-width: 1000px) {
+  .closing-ctas {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Footer                                                            */
+/* ---------------------------------------------------------------- */
+
+.lp-footer {
+  border-top: 1px solid var(--border);
+  padding-block: 56px 40px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+}
+
+@media (min-width: 760px) {
+  .footer-grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 3fr) minmax(0, 3fr);
+  }
+}
+
+.lp-footer p.blurb {
+  margin: 16px 0 0;
+  max-width: 38ch;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-dim);
+}
+
+.footer-col p.h {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.footer-col ul {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.footer-col a {
+  font-size: 14px;
+  color: var(--text-dim);
+  text-decoration: none;
+  text-underline-offset: 4px;
+  transition: color 0.15s;
+}
+
+.footer-col a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.colophon {
+  margin-top: 44px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-faint);
+  max-width: 70ch;
+}
+
+/* ---------------------------------------------------------------- */
+/* Skip link                                                         */
+/* ---------------------------------------------------------------- */
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+
+.skip:focus {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 60;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #1a1403;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- */
+/* Specimens                                                         */
+/*                                                                   */
+/* The fragments are built from the app's own classes in globals.css */
+/* (.panel, .finding, .guard-flag, .conf-cell …), so they cannot     */
+/* drift from the real interface: restyle the dashboard and the      */
+/* landing page's illustrations follow. These rules only add the     */
+/* lift and the slight reduction that makes them read as specimens   */
+/* on a page rather than as live controls.                           */
+/* ---------------------------------------------------------------- */
+
+.specimen {
+  transform: rotate(var(--tilt, 0deg));
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3), 0 24px 48px -20px rgb(0 0 0 / 0.55);
+  border-radius: var(--radius);
+}
+
+.specimen .panel {
+  background: var(--bg-raised);
+}
+
+/* Specimens are pictures of the product, not the product: nothing inside them
+   is reachable by keyboard or announced to a screen reader. */
+.specimen [aria-hidden="true"] {
+  user-select: none;
+}
+
+.spec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.spec-body {
+  padding: 14px;
+}
+
+.spec-body > .finding,
+.spec-body > .guard-flag {
+  margin-bottom: 0;
+}
+
+/* Feed specimen — the step list, with one row mid-run. */
+.spec-steps {
+  display: flex;
+  flex-direction: column;
+}
+
+.spec-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+}
+
+.spec-step:first-child {
+  border-top: none;
+}
+
+.spec-step .n {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.spec-step .l {
+  flex: 1;
+  min-width: 0;
+}
+
+.spec-step .t {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ok);
+}
+
+.spec-step.now .l {
+  color: var(--accent);
+}
+
+.spec-step.now .t {
+  color: var(--text-faint);
+}
+
+.spec-step.idle {
+  opacity: 0.4;
+}
+
+/* Verdict specimen — the hero band and the confidence strip, reduced. */
+.spec-verdict .verdict-hero {
+  padding: 18px 16px;
+}
+
+.spec-verdict .verdict-hero .winner {
+  font-size: 20px;
+}
+
+.spec-verdict .confidence {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.spec-verdict .conf-cell {
+  padding: 11px 14px;
+}
+
+.spec-verdict .conf-cell .v {
+  font-size: 16px;
+}
+
+/* Clause specimen — extracted contract terms as typed rows. */
+.spec-clause {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.spec-clause:first-child {
+  border-top: none;
+}
+
+.spec-clause .cid {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  padding-top: 2px;
+}
+
+.spec-clause .lbl {
+  font-weight: 500;
+}
+
+.spec-clause .txt {
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Settlement specimen — the appeal window. */
+.spec-settle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px;
+  background: var(--bg-sunken);
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.spec-settle .cd {
+  font-family: var(--mono);
+  color: var(--accent);
+}
+
+.spec-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-raised);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.spec-pill.locked {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+}
+
+/* Headline emphasis sits on its own line, in the display italic. */
+.hero h1 em,
+.closing h2 em {
+  display: block;
+}
+
+.lp-btn svg,
+.assurances svg,
+.card .rune {
+  flex-shrink: 0;
+}
+
+.icon {
+  width: 15px;
+  height: 15px;
+}
+
+.section-head .scale-rule {
+  margin-top: 36px;
+  max-width: 260px;
+}
+
+@media (max-width: 999px) {
+  .lp-hide-sm {
+    display: none;
+  }
+}
+
+.specimen-slot {
+  margin-top: 26px;
+  max-width: 540px;
+}
+
+.closing-mark {
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
+  margin-bottom: 22px;
+}
+
+.closing h2 {
+  max-width: 18ch;
+}
+
+.footer-col a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Clause labels can be long; inside a reduced specimen they ellipsis rather
+   than push out of the card. */
+.spec-verdict .decisive .badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The eyebrow is long; at phone widths it tightens rather than wrapping to a
+   two-word orphan line. */
+@media (max-width: 480px) {
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.11em;
+  }
+}
