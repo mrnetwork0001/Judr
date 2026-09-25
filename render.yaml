@@ -1,0 +1,16 @@
+# One-click deploy on Render: New → Blueprint → this repo.
+# Free tier sleeps after ~15 minutes idle; the first request after that takes
+# ~30-60s to wake. Open the URL once before a judging session.
+services:
+  - type: web
+    name: judr
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/vault
+    envVars:
+      # No SERV_API_KEY here on purpose: the public demo runs the recorded run,
+      # labelled as such. Add the key in the Render dashboard for a live deploy.
+      - key: JUDR_APPEAL_WINDOW_MS
+        value: "20000"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
