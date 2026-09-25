@@ -14,6 +14,11 @@ import { validate, type JsonSchema } from "./graph/schema";
 const DEFAULT_BASE_URL = "https://inference-api.openserv.ai/v1";
 const DEFAULT_MODEL = "gpt-5.4-mini";
 const MAX_REPAIRS = 2;
+/** Ample for every schema in the graph; stops a runaway completion. */
+const MAX_COMPLETION_TOKENS = 8192;
+/** Transient statuses get a short retry; a fresh key's rate limit is the usual cause. */
+const RETRY_STATUSES = new Set([429, 500, 502, 503, 504]);
+const MAX_TRANSPORT_RETRIES = 2;
 
 export interface ServMessage {
   role: "system" | "user" | "assistant";
@@ -159,6 +164,7 @@ async function streamCompletion(args: StreamArgs): Promise<{ text: string; usage
     messages: args.messages,
     stream: true,
     stream_options: { include_usage: true },
+    max_completion_tokens: MAX_COMPLETION_TOKENS,
     response_format: {
       type: "json_schema",
       json_schema: {
@@ -170,18 +176,16 @@ async function streamCompletion(args: StreamArgs): Promise<{ text: string; usage
   };
   if (args.temperature !== undefined) body.temperature = args.temperature;
 
-  const res = await fetch(`${args.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${args.apiKey}`,
-    },
-    body: JSON.stringify(body),
-    signal: args.signal,
-  });
+  const res = await postWithRetry(args, JSON.stringify(body));
 
   if (!res.ok || !res.body) {
     const detail = await res.text().catch(() => "");
+    if (res.status === 401 || res.status === 403) {
+      throw new ServError(
+        `SERV rejected the API key (${res.status}). Check SERV_API_KEY in .env.local.`,
+        res.status,
+      );
+    }
     throw new ServError(
       `SERV request failed (${res.status} ${res.statusText}) ${detail.slice(0, 400)}`,
       res.status,
@@ -193,29 +197,34 @@ async function streamCompletion(args: StreamArgs): Promise<{ text: string; usage
   let buffer = "";
   let text = "";
   let usage: Usage | undefined;
+  let finishReason: string | undefined;
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
 
-    // SSE frames are separated by a blank line.
-    let split: number;
-    while ((split = buffer.indexOf("\n\n")) !== -1) {
-      const frame = buffer.slice(0, split);
-      buffer = buffer.slice(split + 2);
+    // SSE frames are separated by a blank line. The spec allows CRLF as well
+    // as LF, and a proxy that normalises line endings would otherwise leave
+    // the reader waiting forever for a "\n\n" that never arrives.
+    let match: RegExpExecArray | null;
+    while ((match = FRAME_BOUNDARY.exec(buffer)) !== null) {
+      const frame = buffer.slice(0, match.index);
+      buffer = buffer.slice(match.index + match[0].length);
 
-      for (const line of frame.split("\n")) {
+      for (const line of frame.split(/\r?\n/)) {
         if (!line.startsWith("data:")) continue;
         const payload = line.slice(5).trim();
         if (payload === "[DONE]") continue;
         try {
           const chunk = JSON.parse(payload);
-          const delta = chunk?.choices?.[0]?.delta?.content;
+          const choice = chunk?.choices?.[0];
+          const delta = choice?.delta?.content;
           if (typeof delta === "string" && delta.length > 0) {
             text += delta;
             args.onDelta?.(delta);
           }
+          if (typeof choice?.finish_reason === "string") finishReason = choice.finish_reason;
           if (chunk?.usage) {
             usage = {
               prompt: chunk.usage.prompt_tokens ?? 0,
@@ -231,7 +240,55 @@ async function streamCompletion(args: StreamArgs): Promise<{ text: string; usage
     }
   }
 
+  // A truncated completion is not schema-invalid JSON to be repaired; it is a
+  // different failure, and the repair prompt would only make it worse.
+  if (finishReason === "length") {
+    throw new ServError(
+      `SERV completion for "${args.schemaName}" was cut off at ${MAX_COMPLETION_TOKENS} tokens.`,
+    );
+  }
+  if (finishReason === "content_filter") {
+    throw new ServError(`SERV refused the "${args.schemaName}" step (content filter).`);
+  }
+
   return { text, usage };
+}
+
+const FRAME_BOUNDARY = /\r?\n\r?\n/;
+
+/**
+ * One request, retried briefly on transient statuses. Honours Retry-After when
+ * the server sends one; otherwise backs off 1s then 2s.
+ */
+async function postWithRetry(args: StreamArgs, body: string): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(`${args.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${args.apiKey}`,
+      },
+      body,
+      signal: args.signal,
+    });
+
+    if (!RETRY_STATUSES.has(res.status) || attempt >= MAX_TRANSPORT_RETRIES) return res;
+
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000 * (attempt + 1);
+    await res.body?.cancel().catch(() => undefined);
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, waitMs);
+      args.signal?.addEventListener(
+        "abort",
+        () => {
+          clearTimeout(timer);
+          reject(new ServError("aborted"));
+        },
+        { once: true },
+      );
+    });
+  }
 }
 
 type ParseResult =
