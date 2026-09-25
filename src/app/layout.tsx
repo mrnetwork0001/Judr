@@ -21,10 +21,41 @@ const instrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
 });
 
+/**
+ * Absolute URLs for social cards. Render sets RENDER_EXTERNAL_URL on its own;
+ * any other host sets NEXT_PUBLIC_SITE_URL. Localhost is the fallback so a
+ * dev build never emits a broken card.
+ */
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ?? process.env.RENDER_EXTERNAL_URL ?? "http://localhost:3000";
+
+const DESCRIPTION =
+  "Autonomous arbitration for tokenized RWA escrow vaults. Evidence in, a verdict with a complete audit trail out, and a vault that settles against it after an appeal window.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Judr — Autonomous Arbitration for Tokenized RWA Vaults",
-  description:
-    "Judr arbitrates disputes over escrowed real-world assets. Evidence goes in, a verdict with a full audit trail comes out, and the vault settles against it.",
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Judr",
+    title: "Judr — Too small to litigate. Too big to walk away from.",
+    description: DESCRIPTION,
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Judr — autonomous arbitration for tokenized RWA vaults",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Judr — Too small to litigate. Too big to walk away from.",
+    description: DESCRIPTION,
+    images: ["/og.png"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
