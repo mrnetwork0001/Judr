@@ -17,6 +17,14 @@
 
 import type { ArbitrationResult, Party, PartyRef } from "./types";
 
+/** A refused transition. The API maps these to 409; anything else is a 500. */
+export class VaultError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "VaultError";
+  }
+}
+
 export type VaultStatus =
   | "funded"
   | "disputed"
@@ -53,8 +61,11 @@ export interface Vault {
   events: VaultEvent[];
 }
 
-/** Demo appeal window. A real deployment would measure this in days. */
-export const APPEAL_WINDOW_MS = Number(process.env.JUDR_APPEAL_WINDOW_MS ?? "45000");
+/**
+ * Demo appeal window. Long enough to read the verdict and lodge an appeal,
+ * short enough not to stall a demo. A real deployment would measure this in days.
+ */
+export const APPEAL_WINDOW_MS = Number(process.env.JUDR_APPEAL_WINDOW_MS ?? "20000");
 
 const VAULT_ID = "IXS-VLT-4417";
 
@@ -74,23 +85,66 @@ function freshVault(): Vault {
   };
 }
 
-/** Survives dev-server hot reloads, which otherwise reset the demo mid-run. */
-const store = globalThis as unknown as { __judrVault?: Vault };
+/**
+ * One vault per browser session, not one global. A public demo is opened by
+ * several judges at once, and with a single shared vault the second visitor's
+ * reset lands in the middle of the first visitor's run.
+ *
+ * Kept on globalThis so it survives dev-server hot reloads, and capped so an
+ * anonymous caller cannot grow it without bound.
+ */
+const MAX_SESSIONS = 500;
 
-export function getVault(): Vault {
-  if (!store.__judrVault) store.__judrVault = freshVault();
-  return store.__judrVault;
+const store = globalThis as unknown as { __judrVaults?: Map<string, Vault> };
+
+function vaults(): Map<string, Vault> {
+  if (!store.__judrVaults) store.__judrVaults = new Map();
+  return store.__judrVaults;
 }
 
-export function resetVault(): Vault {
-  store.__judrVault = freshVault();
-  return store.__judrVault;
+export function getVault(sessionId: string): Vault {
+  const all = vaults();
+  let vault = all.get(sessionId);
+  if (!vault) {
+    vault = freshVault();
+    all.set(sessionId, vault);
+    // Map iterates in insertion order, so the first key is the oldest session.
+    while (all.size > MAX_SESSIONS) {
+      const oldest = all.keys().next().value;
+      if (oldest === undefined) break;
+      all.delete(oldest);
+    }
+  }
+  return vault;
 }
 
-export function raiseDispute(reason: string): Vault {
-  const vault = getVault();
+/** A fresh vault for rendering only — never stored, never mutated. */
+export function previewVault(): Vault {
+  return freshVault();
+}
+
+export function resetVault(sessionId: string): Vault {
+  const vault = freshVault();
+  vaults().set(sessionId, vault);
+  return vault;
+}
+
+/**
+ * A vault under appeal is closed to new arbitration. That is the whole point
+ * of an appeal: nothing Judr does afterwards may move the funds until a human
+ * has looked. Without this guard a second run silently cleared the appeal and
+ * the escrow released with "Appeal lodged" still in the log.
+ */
+export function raiseDispute(sessionId: string, reason: string): Vault {
+  const vault = getVault(sessionId);
   if (vault.status === "released") {
-    throw new Error("Vault already released.");
+    throw new VaultError("Vault already released.");
+  }
+  if (vault.status === "appealed") {
+    throw new VaultError("Vault is under appeal; it is closed to further arbitration until a human reviews it.");
+  }
+  if (vault.status === "verdict_posted") {
+    throw new VaultError("A verdict is already posted and its appeal window is open.");
   }
   vault.status = "disputed";
   vault.events.push({ at: Date.now(), label: "Dispute raised", detail: reason });
@@ -101,8 +155,11 @@ export function raiseDispute(reason: string): Vault {
  * Judr acting as oracle. Posts the verdict and starts the appeal window; does
  * not move funds.
  */
-export function postVerdict(result: ArbitrationResult): Vault {
-  const vault = getVault();
+export function postVerdict(sessionId: string, result: ArbitrationResult): Vault {
+  const vault = getVault(sessionId);
+  if (vault.status !== "disputed") {
+    throw new VaultError(`Cannot post a verdict on a vault that is ${vault.status.replace("_", " ")}.`);
+  }
   const payee = result.verdict.winner === "plaintiff" ? vault.plaintiff : vault.defendant;
   const postedAt = Date.now();
 
@@ -124,13 +181,13 @@ export function postVerdict(result: ArbitrationResult): Vault {
   return vault;
 }
 
-export function appeal(reason: string): Vault {
-  const vault = getVault();
+export function appeal(sessionId: string, reason: string): Vault {
+  const vault = getVault(sessionId);
   if (vault.status !== "verdict_posted") {
-    throw new Error("No verdict is currently open to appeal.");
+    throw new VaultError("No verdict is currently open to appeal.");
   }
   if (Date.now() > (vault.verdict?.appealDeadline ?? 0)) {
-    throw new Error("The appeal window has closed.");
+    throw new VaultError("The appeal window has closed.");
   }
   vault.status = "appealed";
   vault.events.push({
@@ -142,17 +199,17 @@ export function appeal(reason: string): Vault {
 }
 
 /** The transfer. Refuses to run early, or on an appealed verdict. */
-export function release(): Vault {
-  const vault = getVault();
+export function release(sessionId: string): Vault {
+  const vault = getVault(sessionId);
   if (vault.status === "released") return vault;
   if (vault.status === "appealed") {
-    throw new Error("Verdict is under appeal; release is halted.");
+    throw new VaultError("Verdict is under appeal; release is halted.");
   }
   if (vault.status !== "verdict_posted" || !vault.verdict) {
-    throw new Error("No verdict has been posted for this vault.");
+    throw new VaultError("No verdict has been posted for this vault.");
   }
   if (Date.now() < vault.verdict.appealDeadline) {
-    throw new Error("Appeal window has not closed yet.");
+    throw new VaultError("Appeal window has not closed yet.");
   }
 
   vault.status = "released";

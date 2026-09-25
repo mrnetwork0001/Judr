@@ -1,21 +1,24 @@
 /**
- * Vault state and lifecycle actions.
+ * Vault state and lifecycle actions, scoped to the caller's session.
  *
  * Release is a separate, explicit call that the mock contract refuses to honour
  * before the appeal window closes — the check lives with the funds, not with
- * the caller.
+ * the caller. Refused transitions come back as 409 with the reason.
  */
 
-import { appeal, getVault, release, resetVault } from "@/lib/vault";
+import { sessionFor, withSession } from "@/lib/session";
+import { appeal, getVault, release, resetVault, VaultError } from "@/lib/vault";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  return Response.json(getVault());
+export async function GET(request: Request) {
+  const session = sessionFor(request);
+  return withSession(Response.json(getVault(session.id)), session);
 }
 
 export async function POST(request: Request) {
+  const session = sessionFor(request);
   const body = (await request.json().catch(() => ({}))) as {
     action?: "reset" | "appeal" | "release";
     reason?: string;
@@ -24,18 +27,22 @@ export async function POST(request: Request) {
   try {
     switch (body.action) {
       case "reset":
-        return Response.json(resetVault());
+        return withSession(Response.json(resetVault(session.id)), session);
       case "appeal":
-        return Response.json(appeal(body.reason ?? "Appeal lodged by the losing party"));
+        return withSession(
+          Response.json(appeal(session.id, body.reason ?? "Appeal lodged by the losing party")),
+          session,
+        );
       case "release":
-        return Response.json(release());
+        return withSession(Response.json(release(session.id)), session);
       default:
-        return Response.json({ error: "Unknown action." }, { status: 400 });
+        return withSession(Response.json({ error: "Unknown action." }, { status: 400 }), session);
     }
   } catch (error) {
-    return Response.json(
-      { error: error instanceof Error ? error.message : String(error) },
-      { status: 409 },
+    const status = error instanceof VaultError ? 409 : 500;
+    return withSession(
+      Response.json({ error: error instanceof Error ? error.message : String(error) }, { status }),
+      session,
     );
   }
 }

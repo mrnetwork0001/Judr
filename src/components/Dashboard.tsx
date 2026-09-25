@@ -320,7 +320,11 @@ export default function Dashboard({
               </p>
               <div className="controls">
                 <button className="btn primary" onClick={() => void run()} disabled={running}>
-                  {running ? "Arbitrating…" : "Run arbitration"}
+                  {running
+                    ? "Arbitrating…"
+                    : vault.status === "funded"
+                      ? "Run arbitration"
+                      : "New dispute · run again"}
                 </button>
                 <label className="toggle">
                   <input

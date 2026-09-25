@@ -1,14 +1,20 @@
 /**
  * Arbitration endpoint. Streams the run as server-sent events so the dashboard
- * can render reasoning as it lands, and posts the verdict to the vault when the
- * graph completes.
+ * can render reasoning as it lands, and posts the verdict to the caller's vault
+ * when the graph completes.
+ *
+ * The request chooses only whether the tampered document is included. It does
+ * not choose the evidence bundle and it does not choose live-versus-recorded:
+ * both would let an anonymous caller spend the owner's SERV key on arbitrary
+ * input, and the second would let a recorded run be labelled live.
  */
 
 import { runArbitration } from "@/lib/graph/run";
 import { demoDispute } from "@/lib/fixtures";
 import { hasServKey } from "@/lib/serv";
-import { postVerdict, raiseDispute } from "@/lib/vault";
-import type { ArbitrationEvent, DisputeBundle } from "@/lib/types";
+import { sessionFor, withSession } from "@/lib/session";
+import { postVerdict, raiseDispute, VaultError } from "@/lib/vault";
+import type { ArbitrationEvent } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,20 +22,29 @@ export const maxDuration = 300;
 
 interface ArbitrateRequest {
   poisoned?: boolean;
-  replay?: boolean;
-  bundle?: DisputeBundle;
 }
 
 export async function POST(request: Request) {
+  const session = sessionFor(request);
   const body = (await request.json().catch(() => ({}))) as ArbitrateRequest;
-  const bundle = body.bundle ?? demoDispute({ poisoned: body.poisoned });
-  const replay = body.replay ?? !hasServKey();
+  const bundle = demoDispute({ poisoned: body.poisoned === true });
+  // One condition, used for the label and for the run, so they cannot disagree.
+  const replay = !hasServKey();
 
-  raiseDispute(
-    replay
-      ? "Escrow release contested — arbitration requested (recorded run)"
-      : "Escrow release contested — arbitration requested",
-  );
+  try {
+    raiseDispute(
+      session.id,
+      replay
+        ? "Escrow release contested — arbitration requested (recorded run)"
+        : "Escrow release contested — arbitration requested",
+    );
+  } catch (error) {
+    const status = error instanceof VaultError ? 409 : 500;
+    return withSession(
+      Response.json({ error: error instanceof Error ? error.message : String(error) }, { status }),
+      session,
+    );
+  }
 
   const encoder = new TextEncoder();
   const abort = new AbortController();
@@ -56,7 +71,7 @@ export async function POST(request: Request) {
 
       try {
         const result = await runArbitration({ bundle, emit: send, signal: abort.signal, replay });
-        postVerdict(result);
+        postVerdict(session.id, result);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         if (!abort.signal.aborted) {
@@ -73,13 +88,16 @@ export async function POST(request: Request) {
     },
   });
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      // Stops proxies (notably nginx) from buffering the feed into one lump.
-      "X-Accel-Buffering": "no",
-    },
-  });
+  return withSession(
+    new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        // Stops proxies (notably nginx) from buffering the feed into one lump.
+        "X-Accel-Buffering": "no",
+      },
+    }),
+    session,
+  );
 }
