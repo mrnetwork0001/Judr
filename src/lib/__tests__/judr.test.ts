@@ -10,7 +10,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { validate, VERDICT_SCHEMA, CLAUSE_SET_SCHEMA } from "../graph/schema";
-import { verify, deriveConfidence, verdictDigest } from "../graph/run";
+import { verify, deriveConfidence, verdictDigest, tallyConsensus } from "../graph/run";
 import { screenHeuristic } from "../guard";
 import { DEMO_DISPUTE, POISONED_EVIDENCE, demoDispute } from "../fixtures";
 import type { ClauseSet, Evaluation, Verdict } from "../types";
@@ -163,8 +163,8 @@ test("verify rejects a verdict resting on no clause at all", () => {
 
 test("confidence falls when independent runs disagree", () => {
   const passed = { passed: true, issues: [] };
-  const stable = deriveConfidence(GOOD_VERDICT, EVALUATION, passed, { runs: 3, agreed: 3 });
-  const shaky = deriveConfidence(GOOD_VERDICT, EVALUATION, passed, { runs: 3, agreed: 2 });
+  const stable = deriveConfidence(GOOD_VERDICT, EVALUATION, passed, { runs: 3, agreed: 3, failed: 0 });
+  const shaky = deriveConfidence(GOOD_VERDICT, EVALUATION, passed, { runs: 3, agreed: 2, failed: 0 });
   assert.ok(shaky.score < stable.score);
   assert.equal(stable.score, 1);
 });
@@ -174,7 +174,7 @@ test("failed verification caps confidence regardless of agreement", () => {
     passed: false,
     issues: [{ kind: "unknown_clause" as const, detail: "d" }],
   };
-  const result = deriveConfidence(GOOD_VERDICT, EVALUATION, failed, { runs: 3, agreed: 3 });
+  const result = deriveConfidence(GOOD_VERDICT, EVALUATION, failed, { runs: 3, agreed: 3, failed: 0 });
   assert.ok(result.score <= 0.35);
   assert.equal(result.verified, false);
 });
@@ -190,9 +190,29 @@ test("indeterminate decisive clauses drag clause support down", () => {
     GOOD_VERDICT,
     evaluation,
     { passed: true, issues: [] },
-    { runs: 3, agreed: 3 },
+    { runs: 3, agreed: 3, failed: 0 },
   );
   assert.equal(result.clause_support, 0.5);
+});
+
+test("a re-run that errored counts as a run that did not agree", () => {
+  // Both extra runs failed. Before the fix this reported 1/1 and scored 1.0 —
+  // total failure of the stability check looked identical to a perfect one.
+  const tally = tallyConsensus([null, null], "plaintiff");
+  assert.deepEqual(tally, { runs: 3, agreed: 1, failed: 2 });
+
+  const passed = { passed: true, issues: [] };
+  const allFailed = deriveConfidence(GOOD_VERDICT, EVALUATION, passed, tally);
+  const genuine = deriveConfidence(GOOD_VERDICT, EVALUATION, passed, { runs: 3, agreed: 3, failed: 0 });
+  const disagreed = deriveConfidence(GOOD_VERDICT, EVALUATION, passed, { runs: 3, agreed: 2, failed: 0 });
+  assert.ok(allFailed.score < disagreed.score, "unmeasured must score below honest disagreement");
+  assert.ok(allFailed.score < genuine.score);
+});
+
+test("tallyConsensus counts agreement and dissent separately from failure", () => {
+  assert.deepEqual(tallyConsensus(["plaintiff", "defendant"], "plaintiff"), { runs: 3, agreed: 2, failed: 0 });
+  assert.deepEqual(tallyConsensus(["plaintiff", null], "plaintiff"), { runs: 3, agreed: 2, failed: 1 });
+  assert.deepEqual(tallyConsensus([], "plaintiff"), { runs: 1, agreed: 1, failed: 0 });
 });
 
 /* ---------------------------------------------------------------- */

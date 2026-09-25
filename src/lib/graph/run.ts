@@ -114,15 +114,23 @@ export async function runArbitration(opts: RunOptions): Promise<ArbitrationResul
     signal,
   });
   const admissible = bundle.evidence.filter((d) => !guard.quarantined.includes(d.id));
+  // The record says what actually ran. If the model pass threw, the step is
+  // recorded as deterministic-only and unvalidated, not as a model check.
   const guardRecord: StepRecord = {
     step: "screen",
     label: "Screening evidence",
     startedAt: guardStart,
     endedAt: Date.now(),
-    model: hasServKey() ? `${servConfig().model} + deterministic patterns` : "deterministic",
+    model:
+      guard.model_pass === "ran"
+        ? `${servConfig().model} + deterministic patterns`
+        : "deterministic patterns only",
     input_digest: digest(bundle.evidence.map((d) => d.id)),
     output: guard,
-    validated: true,
+    validated: guard.model_pass !== "failed",
+    ...(guard.model_pass === "failed"
+      ? { validation_errors: [`model screening pass failed: ${guard.model_error}`] }
+      : {}),
     repairs: 0,
   };
   trail.push(guardRecord);
@@ -225,9 +233,9 @@ async function measureConsensus(args: {
   trail: StepRecord[];
   emit: Emit;
   signal?: AbortSignal;
-}): Promise<{ runs: number; agreed: number }> {
+}): Promise<{ runs: number; agreed: number; failed: number }> {
   const extra = Math.max(0, CONSENSUS_RUNS - 1);
-  if (extra === 0) return { runs: 1, agreed: 1 };
+  if (extra === 0) return { runs: 1, agreed: 1, failed: 0 };
 
   const start = Date.now();
   args.emit({
@@ -236,9 +244,6 @@ async function measureConsensus(args: {
     label: `Re-running the decision ${extra}× to test stability`,
     at: start,
   });
-
-  let agreed = 1;
-  let runs = 1;
 
   const results = await Promise.allSettled(
     Array.from({ length: extra }, () =>
@@ -249,11 +254,13 @@ async function measureConsensus(args: {
     ),
   );
 
-  for (const outcome of results) {
-    if (outcome.status !== "fulfilled") continue;
-    runs++;
-    if (outcome.value.value.winner === args.verdict.winner) agreed++;
-  }
+  const tally = tallyConsensus(
+    results.map((r) => (r.status === "fulfilled" ? r.value.value.winner : null)),
+    args.verdict.winner,
+  );
+  const failures = results.flatMap((r) =>
+    r.status === "rejected" ? [r.reason instanceof Error ? r.reason.message : String(r.reason)] : [],
+  );
 
   const record: StepRecord = {
     step: "consensus",
@@ -262,14 +269,34 @@ async function measureConsensus(args: {
     endedAt: Date.now(),
     model: servConfig().model,
     input_digest: digest(args.evaluation),
-    output: { runs, agreed, winner: args.verdict.winner },
-    validated: true,
+    output: { ...tally, winner: args.verdict.winner },
+    validated: tally.failed === 0,
+    ...(tally.failed > 0 ? { validation_errors: failures } : {}),
     repairs: 0,
   };
   args.trail.push(record);
   args.emit({ type: "step_done", step: "consensus", record });
 
-  return { runs, agreed };
+  return tally;
+}
+
+/**
+ * Counts the re-runs. The verdict of record is run one and agrees with itself
+ * by definition. A re-run that errored is a run that happened and did not
+ * agree — it is never dropped, because dropping it would let a total failure
+ * of the stability check score exactly like a perfect one.
+ */
+export function tallyConsensus(
+  rerunWinners: Array<string | null>,
+  winner: string,
+): { runs: number; agreed: number; failed: number } {
+  let agreed = 1;
+  let failed = 0;
+  for (const w of rerunWinners) {
+    if (w === null) failed++;
+    else if (w === winner) agreed++;
+  }
+  return { runs: 1 + rerunWinners.length, agreed, failed };
 }
 
 /* ---------------------------------------------------------------- */
@@ -343,7 +370,7 @@ export function deriveConfidence(
   verdict: Verdict,
   evaluation: Evaluation,
   verification: Verification,
-  consensus: { runs: number; agreed: number },
+  consensus: { runs: number; agreed: number; failed: number },
 ): Confidence {
   const findings = new Map(evaluation.findings.map((f) => [f.clause_id, f]));
   const decisive = verdict.decisive_clauses;

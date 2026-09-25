@@ -51,10 +51,14 @@ export default function VerdictPanel({
         </div>
         <div className="conf-cell">
           <div className="k">Decision stability</div>
-          <div className="v">
+          <div className={`v ${confidence.consensus.failed > 0 ? "warn" : ""}`}>
             {confidence.consensus.agreed}/{confidence.consensus.runs}
           </div>
-          <div className="n">independent runs agreed</div>
+          <div className="n">
+            {confidence.consensus.failed > 0
+              ? `independent runs agreed · ${confidence.consensus.failed} failed to run`
+              : "independent runs agreed"}
+          </div>
         </div>
         <div className="conf-cell">
           <div className="k">Clause support</div>

@@ -11,6 +11,14 @@
  */
 
 import { screenHeuristic } from "./guard";
+import {
+  CLAIM_SCHEMA,
+  CLAUSE_SET_SCHEMA,
+  EVALUATION_SCHEMA,
+  VERDICT_SCHEMA,
+  validate,
+  type JsonSchema,
+} from "./graph/schema";
 import type {
   ArbitrationEvent,
   ArbitrationResult,
@@ -23,7 +31,9 @@ import type {
   Verdict,
 } from "./types";
 
-const REPLAY_MODEL = "gpt-5.4-mini (recorded)";
+// Not a model id: nothing is called during replay. The outputs were authored
+// as fixtures and are validated against the same schemas a live run must pass.
+const REPLAY_MODEL = "recorded fixture — no model call";
 
 const CLAUSES: ClauseSet = {
   clauses: [
@@ -178,7 +188,7 @@ export async function loadReplay(args: ReplayArgs): Promise<ArbitrationResult> {
   const quarantined = [
     ...new Set(flags.filter((f) => f.severity === "high").map((f) => f.evidence_id)),
   ];
-  const guard: GuardReport = { clean: flags.length === 0, flags, quarantined };
+  const guard: GuardReport = { clean: flags.length === 0, flags, quarantined, model_pass: "skipped" };
   trail.push(
     record("screen", "Screening evidence", guardStart, "deterministic", guard),
   );
@@ -196,19 +206,19 @@ export async function loadReplay(args: ReplayArgs): Promise<ArbitrationResult> {
     })),
   };
 
-  await playStep(args, trail, "extract_clauses", "Extracting contract clauses", CLAUSES, [
+  await playStep(args, trail, "extract_clauses", "Extracting contract clauses", CLAUSES, CLAUSE_SET_SCHEMA, [
     "Reading the Agreement and isolating each operative term…",
     "Seven clauses identified. Quoting verbatim; no clause is paraphrased.",
     "Noting that clause 3 contains an express scope exclusion and clause 4 a conditional acceptance term — both procedural, both capable of disposing of a dispute on their own.",
   ]);
 
-  await playStep(args, trail, "classify_claim", "Identifying what is in dispute", CLAIM, [
+  await playStep(args, trail, "classify_claim", "Identifying what is in dispute", CLAIM, CLAIM_SCHEMA, [
     "The parties frame this as 'was the site delivered'.",
     "That framing is incomplete. Delivery is a defined term here, and acceptance operates automatically on a deadline.",
     "Invoking c2 (delivery date), c3 (method and exclusion), c4 (acceptance window), c6 (payment on acceptance).",
   ]);
 
-  await playStep(args, trail, "evaluate", "Weighing evidence against each clause", evaluation, [
+  await playStep(args, trail, "evaluate", "Weighing evidence against each clause", evaluation, EVALUATION_SCHEMA, [
     "c2 — repository log gives the tag at 2026-09-08 14:22, ahead of the 10 September deadline. Satisfied.",
     "c3 — clause defines delivery as tag plus emailed staging URL, and expressly excludes the production domain.",
     "c3 — uptime report shows all five Schedule A routes serving 200 across the period; the submitted 404 is for the production domain, outside scope. Satisfied.",
@@ -217,24 +227,22 @@ export async function loadReplay(args: ReplayArgs): Promise<ArbitrationResult> {
     "c6 — release is conditional on acceptance, express or deemed. Condition met. Satisfied.",
   ]);
 
-  await playStep(args, trail, "adjudicate", "Adjudicating", VERDICT, [
+  await playStep(args, trail, "adjudicate", "Adjudicating", VERDICT, VERDICT_SCHEMA, [
     "The Client is factually right that the production domain returned 404 — and that fact is not load-bearing, because clause 3 never promised anything there.",
     "Decisive: c3 fixes what delivery meant; c4 disposes of the matter on timing.",
     "Addressing the Client's strongest point: the expectation of a live site on their own domain is reasonable, and it is not what the Agreement provides.",
     "Verdict: the escrow is payable to the Contractor.",
   ]);
 
+  // The recorded run does not re-decide anything. The label says so, rather
+  // than implying a stability measurement is happening in front of the viewer.
+  const consensusLabel = "Decision stability (recorded result — not re-measured)";
   const consensusStart = Date.now();
-  emit({
-    type: "step_started",
-    step: "consensus",
-    label: "Re-running the decision 2× to test stability",
-    at: consensusStart,
-  });
+  emit({ type: "step_started", step: "consensus", label: consensusLabel, at: consensusStart });
   await pause(900, signal);
-  const consensus = { runs: 3, agreed: 3 };
+  const consensus = { runs: 3, agreed: 3, failed: 0 };
   trail.push(
-    record("consensus", "Re-running the decision 2× to test stability", consensusStart, REPLAY_MODEL, {
+    record("consensus", consensusLabel, consensusStart, REPLAY_MODEL, {
       ...consensus,
       winner: VERDICT.winner,
     }),
@@ -273,6 +281,7 @@ async function playStep(
   step: string,
   label: string,
   output: unknown,
+  schema: JsonSchema,
   narration: string[],
 ): Promise<void> {
   const start = Date.now();
@@ -283,8 +292,14 @@ async function playStep(
     await pause(260, args.signal);
   }
 
-  trail.push(record(step, label, start, REPLAY_MODEL, output));
-  args.emit({ type: "step_done", step, record: trail[trail.length - 1] });
+  // The fixture is checked against the same schema a live step must satisfy.
+  // "schema ✓" in the trail means the same thing in both modes.
+  const errors = validate(output, schema);
+  const rec = record(step, label, start, REPLAY_MODEL, output);
+  rec.validated = errors.length === 0;
+  if (errors.length > 0) rec.validation_errors = errors;
+  trail.push(rec);
+  args.emit({ type: "step_done", step, record: rec });
 }
 
 /** Emits a line in word-sized chunks so the feed animates like a live stream. */

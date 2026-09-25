@@ -113,6 +113,12 @@ export interface GuardReport {
   flags: GuardFlag[];
   /** Evidence ids that were quarantined and excluded from adjudication. */
   quarantined: string[];
+  /**
+   * Whether the model pass actually ran. "skipped" means no key; "failed"
+   * means the call threw and only the deterministic patterns stand.
+   */
+  model_pass: "ran" | "skipped" | "failed";
+  model_error?: string;
 }
 
 /* ---------------------------------------------------------------- */
@@ -140,8 +146,12 @@ export interface StepRecord {
 export interface Confidence {
   /** 0..1, derived from step agreement — never self-reported by the model. */
   score: number;
-  /** How many independent adjudication runs agreed on the winner. */
-  consensus: { runs: number; agreed: number };
+  /**
+   * How many independent adjudication runs agreed on the winner. A run that
+   * errored is counted in `runs` and `failed` but never in `agreed`: an
+   * unmeasured re-run is not evidence of stability.
+   */
+  consensus: { runs: number; agreed: number; failed: number };
   /** Share of decisive clauses with a non-indeterminate finding. */
   clause_support: number;
   verified: boolean;

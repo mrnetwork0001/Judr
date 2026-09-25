@@ -95,12 +95,14 @@ export function screenHeuristic(docs: EvidenceDoc[]): GuardFlag[] {
   return flags;
 }
 
+type ModelPass =
+  | { status: "ran"; flags: GuardFlag[] }
+  | { status: "skipped" }
+  | { status: "failed"; error: string };
+
 /** Model pass. Skipped when no key is configured. */
-async function screenModel(
-  docs: EvidenceDoc[],
-  signal?: AbortSignal,
-): Promise<GuardFlag[]> {
-  if (!hasServKey()) return [];
+async function screenModel(docs: EvidenceDoc[], signal?: AbortSignal): Promise<ModelPass> {
+  if (!hasServKey()) return { status: "skipped" };
 
   const rendered = docs
     .map((d) => `<document id="${d.id}" filename="${d.filename}">\n${d.text}\n</document>`)
@@ -118,11 +120,12 @@ async function screenModel(
       ],
     });
     const ids = new Set(docs.map((d) => d.id));
-    return result.value.flags.filter((f) => ids.has(f.evidence_id));
-  } catch {
+    return { status: "ran", flags: result.value.flags.filter((f) => ids.has(f.evidence_id)) };
+  } catch (error) {
     // Screening is defence in depth, not a gate. If the model pass fails the
-    // deterministic pass still stands and the run continues.
-    return [];
+    // deterministic pass still stands and the run continues — but the audit
+    // trail must say so, rather than recording a model check that never ran.
+    return { status: "failed", error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -134,19 +137,28 @@ export async function screenEvidence(
   for (const flag of flags) opts.onFlag?.(flag);
 
   const seen = new Set(flags.map((f) => `${f.evidence_id}:${f.kind}`));
-  for (const flag of await screenModel(docs, opts.signal)) {
-    const key = `${flag.evidence_id}:${flag.kind}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    flags.push(flag);
-    opts.onFlag?.(flag);
+  const pass = await screenModel(docs, opts.signal);
+  if (pass.status === "ran") {
+    for (const flag of pass.flags) {
+      const key = `${flag.evidence_id}:${flag.kind}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      flags.push(flag);
+      opts.onFlag?.(flag);
+    }
   }
 
   const quarantined = [
     ...new Set(flags.filter((f) => f.severity === "high").map((f) => f.evidence_id)),
   ];
 
-  return { clean: flags.length === 0, flags, quarantined };
+  return {
+    clean: flags.length === 0,
+    flags,
+    quarantined,
+    model_pass: pass.status,
+    ...(pass.status === "failed" ? { model_error: pass.error } : {}),
+  };
 }
 
 function excerptAround(text: string, index: number, length: number): string {
