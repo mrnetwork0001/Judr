@@ -50,7 +50,7 @@ export default function Footer() {
         </div>
 
         <p className="colophon">
-          Built for the OpenServ SERV Hackathon, Edition 01 — IXS Vaults and Open Track.
+          Built for the OpenServ SERV Hackathon, Edition 01.
           The vault is a mock and the dispute is fictional. Judr is a demonstration of how
           an automated decision can be made auditable; it is not legal advice and it does
           not replace arbitration where arbitration is worth its cost.
