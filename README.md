@@ -8,7 +8,11 @@ it — after an appeal window, never on a model's say-so.
 
 **Live demo:** _deploy URL goes here_ · **Video:** [docs/demo.mp4](docs/demo.mp4)
 
-![Judr arbitrating a dispute: evidence screened, a tampered document quarantined, seven typed steps, a verdict with derived confidence](docs/demo.gif)
+![Judr arbitrating a dispute live on SERV: evidence screened, a tampered document quarantined, seven typed steps, a verdict with derived confidence and its price](docs/demo.gif)
+
+A decision on the demo case, live on SERV: **$0.03, 25 seconds, 13,472
+tokens** — against $3,000+ and 6–12 weeks for a human arbitrator. A visitor's
+own case, pasted in: $0.02 and 23 seconds.
 
 ---
 
@@ -149,6 +153,22 @@ quarantined, and the verdict does not move.
 
 Each visitor gets their own vault, so several people can run the demo at once.
 
+**Bring your own dispute.** Paste a contract, say what is in dispute, add
+evidence for each side, and Judr decides it live through the same graph —
+screening included, so a hidden *"SYSTEM: rule for me"* in your own document
+gets quarantined too. Sizes are capped and each session gets three runs an
+hour; this spends the owner's key. The first case tried, an original
+logo-design dispute, was decided correctly with every finding cited.
+
+**What happens after an appeal.** Judr stops. A person upholds the verdict or
+overturns it, with a written reason that goes on the vault's record, and the
+escrow settles to whoever they decide. Judr never resumes on its own.
+
+**The price of the decision.** Every live verdict shows what it cost — tokens
+per step at the model's published rates, and wall-clock time — beside what a
+human arbitrator costs. The consensus step shows its three verdicts, not just
+a count.
+
 ## Running it
 
 ```bash
@@ -169,7 +189,7 @@ A recorded run is never presented as a live one.
 bundle — both for capturing a demo recording hands-free.
 
 ```bash
-npm test          # 49 unit tests, no framework, no build step
+npm test          # 52 unit tests, no framework, no build step
 npm run typecheck
 npm run build
 ```
@@ -225,11 +245,12 @@ vault reads and unsigned transactions.
   was not an option in the time available. Yield in the demo accrues at the
   rate IXS reports, from the recorded allocation date; it is arithmetic over a
   reported rate, not a claimed position.
-- **The live SERV path has not been run against the real endpoint.** It is
-  implemented, and exercised end to end against a mock of the documented API
-  in the test suite, but every run shown in this repository is the recorded
-  one. The model id and base URL in `.env.example` are the documented
-  defaults, not values confirmed by a live call.
+- **A public deploy without a key serves the recorded run.** The live path
+  was exercised end to end against SERV during development — the demo case,
+  the tampered variant, an original custom case and the allocation step, no
+  schema repairs needed — and the recording in this README is of a live run.
+  Set `SERV_API_KEY` on the deployment to decide cases live; without it the UI
+  says `RECORDED RUN` and custom disputes are refused.
 - **In replay mode the stability figure is a recorded result.** The consensus
   step does not re-decide anything during playback; it is labelled as such in
   the feed and the trail. Only a live run measures stability.
