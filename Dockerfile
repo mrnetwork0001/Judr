@@ -8,7 +8,9 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# The lockfile is written by npm 11; npm 10 in the base image reads optional
+# peers differently and refuses it. Match the lock's author.
+RUN npm install -g npm@11 && npm ci
 
 FROM node:22-alpine AS build
 WORKDIR /app
