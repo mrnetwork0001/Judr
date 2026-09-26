@@ -246,9 +246,26 @@ long-lived process**. Serverless hosts split the arbitration stream and the
 vault read across instances and the settlement panel never sees the verdict.
 
 `render.yaml` is a one-click Render blueprint; the `Dockerfile` runs anywhere
-that runs a container. Set `SERV_API_KEY` and the three `CDP_*` values in the
-host's environment. `CDP_NETWORK=base` moves the agent to mainnet; fund its
-address first and keep the payout caps.
+that runs a container — Railway, Koyeb and Fly pick it up from the repo. Set
+`SERV_API_KEY` and the three `CDP_*` values in the host's environment.
+`CDP_NETWORK=base` moves the agent to mainnet; fund its address first and keep
+the payout caps.
+
+On a VPS with Docker, it is one command with TLS included:
+
+```bash
+git clone https://github.com/mrnetwork0001/Judr && cd Judr
+cp .env.example .env            # fill in SERV_API_KEY and the three CDP_* values
+DOMAIN=judr.example.com docker compose up -d --build
+```
+
+Caddy obtains the certificate and proxies to the app; the arbitration stream
+is passed through unbuffered. Point the domain's A record at the server first,
+or use `DOMAIN=:80` and the server's IP.
+
+**Not Vercel** — or any serverless host — without changes. Cases, payout caps
+and run caps live in the server's memory, and serverless routes requests
+across instances, so a verdict posted on one is invisible to the next.
 
 ## Layout
 

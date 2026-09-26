@@ -1,0 +1,33 @@
+# One-command deploy on any VPS with Docker:
+#   cp .env.example .env   # fill in SERV_API_KEY and the three CDP_* values
+#   DOMAIN=judr.example.com docker compose up -d --build
+# Caddy terminates TLS for DOMAIN automatically (Let's Encrypt) and proxies to
+# the app. Without a domain, set DOMAIN=:80 and use http://<server-ip>.
+services:
+  judr:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NEXT_PUBLIC_SITE_URL: ${SITE_URL:-https://${DOMAIN:-localhost}}
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - judr
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,7 @@
+{$DOMAIN} {
+	encode gzip
+	# The arbitration feed is server-sent events; do not buffer it.
+	reverse_proxy judr:3000 {
+		flush_interval -1
+	}
+}
