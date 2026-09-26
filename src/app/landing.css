@@ -1,17 +1,19 @@
 /*
  * Landing page styles.
  *
- * Shares the app's tokens from globals.css — same near-black ground, same gold
- * — so arriving at /app feels like walking further into the same building
- * rather than through a door onto a different street. What changes is register:
- * the display serif, far more air, and the product shown as specimens on a page
- * rather than as a working dashboard.
+ * Shares the app's tokens from globals.css — same silver canvas, same sheen
+ * behind it, same glass — so arriving at /app feels like walking further into
+ * the same building. What changes is register: the display serif, far more
+ * air, a floating nav, and the product shown as specimens on the page rather
+ * than as a working dashboard.
  */
 
 .lp {
   --gutter: 20px;
   --measure: 1280px;
   --display: var(--font-display), ui-serif, Georgia, serif;
+  /* Room for the floating nav. */
+  --nav-clearance: 118px;
 }
 
 @media (min-width: 640px) {
@@ -83,7 +85,6 @@
   flex-shrink: 0;
   width: 56px;
   height: 28px;
-  /* The beam sits on the glyph's midline, so the flanking rules meet it. */
   margin-inline: 2px;
 }
 
@@ -98,6 +99,7 @@
   font-weight: 400;
   letter-spacing: -0.015em;
   margin: 0;
+  color: var(--text);
 }
 
 .lp h1 {
@@ -122,6 +124,12 @@
   color: var(--accent);
 }
 
+/* Headline emphasis sits on its own line, in the display italic. */
+.hero h1 em,
+.closing h2 em {
+  display: block;
+}
+
 .lead {
   font-size: clamp(1rem, 1.5vw, 1.18rem);
   line-height: 1.65;
@@ -143,11 +151,8 @@
   animation: rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/*
- * The tilt rides through the animation as a custom property. An earlier version
- * ended on `transform: none`, which silently cancelled the rotation the moment
- * the animation settled.
- */
+/* The tilt rides through the animation as a custom property, so the
+   keyframes never cancel a specimen's rotation on settle. */
 @keyframes rise {
   from {
     opacity: 0;
@@ -170,22 +175,34 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* Nav                                                               */
+/* Nav — a floating glass pill, after the reference                  */
 /* ---------------------------------------------------------------- */
 
 .lp-nav {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  right: 20px;
   z-index: 50;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s, background 0.2s;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(245, 245, 248, 0.88), rgba(235, 235, 240, 0.78));
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 10px 30px rgba(20, 20, 30, 0.06);
+  transition: box-shadow 0.25s, background 0.25s;
+}
+
+@media (min-width: 900px) {
+  .lp-nav {
+    top: 28px;
+    left: 40px;
+    right: 40px;
+  }
 }
 
 .lp-nav.scrolled {
-  border-bottom-color: var(--border);
-  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  background: linear-gradient(180deg, rgba(245, 245, 248, 0.94), rgba(235, 235, 240, 0.88));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 14px 36px rgba(20, 20, 30, 0.1);
 }
 
 .lp-nav-inner {
@@ -194,6 +211,14 @@
   justify-content: space-between;
   gap: 16px;
   height: 66px;
+  padding-inline: 14px 12px;
+  max-width: none;
+}
+
+@media (min-width: 900px) {
+  .lp-nav-inner {
+    padding-inline: 28px 14px;
+  }
 }
 
 .lp-nav nav {
@@ -217,7 +242,7 @@
 }
 
 .lp-nav nav a:hover {
-  color: var(--accent);
+  color: var(--text);
   text-decoration: underline;
 }
 
@@ -233,9 +258,9 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   border: 1px solid var(--border-strong);
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.6);
   color: var(--text-dim);
 }
 
@@ -310,40 +335,54 @@
   gap: 8px;
   height: 46px;
   padding: 0 22px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid transparent;
   font-size: 15px;
   font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
 }
 
 .lp-btn.sm {
-  height: 38px;
-  padding: 0 15px;
+  height: 40px;
+  padding: 0 16px;
   font-size: 14px;
+  border-radius: 11px;
 }
 
+/* The primary action is ink on silver. */
 .lp-btn.accent {
-  background: var(--accent);
-  color: #1a1403;
+  background: var(--text);
+  color: #f7f7fa;
   font-weight: 600;
+  box-shadow: 0 8px 22px rgba(22, 22, 26, 0.18);
 }
 
 .lp-btn.accent:hover {
-  background: #e4b455;
+  background: #2a2a31;
 }
 
 .lp-btn.secondary {
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.55);
   border-color: var(--border-strong);
   color: var(--text);
 }
 
 .lp-btn.secondary:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--text-faint);
+}
+
+.lp-btn svg,
+.assurances svg,
+.card .rune {
+  flex-shrink: 0;
+}
+
+.icon {
+  width: 15px;
+  height: 15px;
 }
 
 /* ---------------------------------------------------------------- */
@@ -351,13 +390,26 @@
 /* ---------------------------------------------------------------- */
 
 .section {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.7);
   padding-block: clamp(64px, 9vw, 116px);
-  scroll-margin-top: 80px;
+  scroll-margin-top: 110px;
+  position: relative;
 }
 
+.section::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Sunken sections get a faint wash so the rhythm of the page is legible
+   without hiding the sheen behind them. */
 .section.sunken {
-  background: var(--bg-sunken);
+  background: rgba(233, 233, 237, 0.45);
 }
 
 .section-head {
@@ -370,6 +422,17 @@
 
 .section-head .lead {
   margin-top: 18px;
+}
+
+.section-head .scale-rule {
+  margin-top: 36px;
+  max-width: 260px;
+}
+
+@media (max-width: 999px) {
+  .lp-hide-sm {
+    display: none;
+  }
 }
 
 /* Sticky left column, scrolling right column. */
@@ -387,7 +450,7 @@
   }
   .split > .section-head {
     position: sticky;
-    top: 104px;
+    top: 124px;
   }
 }
 
@@ -399,18 +462,7 @@
   position: relative;
   isolation: isolate;
   overflow-x: clip;
-  padding-block: clamp(44px, 6vw, 84px) clamp(64px, 9vw, 112px);
-}
-
-/* A faint dot grid, faded out downward — the ledger paper under everything. */
-.hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
-  background-size: 22px 22px;
-  mask-image: linear-gradient(to bottom, black 45%, transparent);
+  padding-block: calc(var(--nav-clearance) + clamp(16px, 4vw, 48px)) clamp(64px, 9vw, 112px);
 }
 
 .hero-grid {
@@ -480,9 +532,9 @@
   position: absolute;
   inset: 24px -14px 28px;
   z-index: -1;
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  background: color-mix(in srgb, var(--bg-raised) 55%, transparent);
+  border-radius: 28px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.55), rgba(236, 236, 242, 0.35));
+  box-shadow: var(--glass-edge);
 }
 
 .vignette-grid {
@@ -542,9 +594,9 @@
   margin-bottom: 12px;
 }
 
-.steps .specimen {
+.specimen-slot {
   margin-top: 26px;
-  max-width: 520px;
+  max-width: 540px;
 }
 
 /* ---------------------------------------------------------------- */
@@ -554,17 +606,18 @@
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
+  gap: 16px;
   margin-top: 48px;
 }
 
 .card {
-  background: var(--bg-raised);
-  padding: 26px 24px;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 22px;
+  box-shadow: var(--glass-edge);
+  padding: 28px 26px;
 }
 
 .card h3 {
@@ -590,9 +643,12 @@
 /* ---------------------------------------------------------------- */
 
 .graph {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-sunken);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 22px;
+  box-shadow: var(--glass-edge);
   padding: 28px 24px;
   overflow-x: auto;
 }
@@ -605,7 +661,7 @@
 }
 
 .graph .node-box {
-  fill: var(--bg-raised);
+  fill: rgba(255, 255, 255, 0.85);
   stroke: var(--border-strong);
 }
 
@@ -654,7 +710,7 @@
   height: 9px;
   border-radius: 2px;
   border: 1px solid var(--border-strong);
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .graph-key i.det {
@@ -690,28 +746,23 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* Closing                                                           */
+/* Closing — a glass band, after the reference                       */
 /* ---------------------------------------------------------------- */
 
 .closing {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
-  background: var(--bg-sunken);
-  border-top: 1px solid var(--border);
-  padding-block: clamp(72px, 10vw, 128px);
+  padding-block: clamp(56px, 8vw, 96px);
 }
 
-.closing::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(
-    ellipse 70% 100% at 50% 0%,
-    color-mix(in srgb, var(--accent) 9%, transparent),
-    transparent
-  );
+.closing-band {
+  background: linear-gradient(180deg, rgba(251, 252, 255, 0.9), rgba(240, 240, 246, 0.72));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 30px;
+  box-shadow: var(--glass-edge-lift);
+  padding: clamp(40px, 6vw, 64px) clamp(24px, 5vw, 60px);
 }
 
 .closing-grid {
@@ -726,6 +777,17 @@
     grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
     gap: 48px;
   }
+}
+
+.closing-mark {
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
+  margin-bottom: 22px;
+}
+
+.closing h2 {
+  max-width: 18ch;
 }
 
 .closing .lp-btn {
@@ -794,6 +856,9 @@
 }
 
 .footer-col a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 14px;
   color: var(--text-dim);
   text-decoration: none;
@@ -802,7 +867,7 @@
 }
 
 .footer-col a:hover {
-  color: var(--accent);
+  color: var(--text);
   text-decoration: underline;
 }
 
@@ -831,8 +896,8 @@
   z-index: 60;
   padding: 10px 16px;
   border-radius: 8px;
-  background: var(--accent);
-  color: #1a1403;
+  background: var(--text);
+  color: #f7f7fa;
   font-size: 14px;
   font-weight: 600;
 }
@@ -840,26 +905,21 @@
 /* ---------------------------------------------------------------- */
 /* Specimens                                                         */
 /*                                                                   */
-/* The fragments are built from the app's own classes in globals.css */
-/* (.panel, .finding, .guard-flag, .conf-cell …), so they cannot     */
-/* drift from the real interface: restyle the dashboard and the      */
-/* landing page's illustrations follow. These rules only add the     */
-/* lift and the slight reduction that makes them read as specimens   */
-/* on a page rather than as live controls.                           */
+/* Built from the app's own classes in globals.css, so they cannot   */
+/* drift from the real interface. These rules only add the lift and  */
+/* the reduction that make them read as specimens on a page.         */
 /* ---------------------------------------------------------------- */
 
 .specimen {
   transform: rotate(var(--tilt, 0deg));
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3), 0 24px 48px -20px rgb(0 0 0 / 0.55);
   border-radius: var(--radius);
 }
 
 .specimen .panel {
-  background: var(--bg-raised);
+  background: var(--glass-strong);
+  box-shadow: var(--glass-edge-lift);
 }
 
-/* Specimens are pictures of the product, not the product: nothing inside them
-   is reachable by keyboard or announced to a screen reader. */
 .specimen [aria-hidden="true"] {
   user-select: none;
 }
@@ -887,7 +947,6 @@
   margin-bottom: 0;
 }
 
-/* Feed specimen — the step list, with one row mid-run. */
 .spec-steps {
   display: flex;
   flex-direction: column;
@@ -935,7 +994,6 @@
   opacity: 0.4;
 }
 
-/* Verdict specimen — the hero band and the confidence strip, reduced. */
 .spec-verdict .verdict-hero {
   padding: 18px 16px;
 }
@@ -956,7 +1014,12 @@
   font-size: 16px;
 }
 
-/* Clause specimen — extracted contract terms as typed rows. */
+.spec-verdict .decisive .badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .spec-clause {
   display: grid;
   grid-template-columns: 26px minmax(0, 1fr);
@@ -993,7 +1056,6 @@
   overflow: hidden;
 }
 
-/* Settlement specimen — the appeal window. */
 .spec-settle {
   display: flex;
   align-items: center;
@@ -1019,7 +1081,7 @@
   padding: 5px 11px;
   border-radius: 6px;
   border: 1px solid var(--border-strong);
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.7);
   font-size: 12px;
   color: var(--text-faint);
 }
@@ -1027,64 +1089,6 @@
 .spec-pill.locked {
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent);
-}
-
-/* Headline emphasis sits on its own line, in the display italic. */
-.hero h1 em,
-.closing h2 em {
-  display: block;
-}
-
-.lp-btn svg,
-.assurances svg,
-.card .rune {
-  flex-shrink: 0;
-}
-
-.icon {
-  width: 15px;
-  height: 15px;
-}
-
-.section-head .scale-rule {
-  margin-top: 36px;
-  max-width: 260px;
-}
-
-@media (max-width: 999px) {
-  .lp-hide-sm {
-    display: none;
-  }
-}
-
-.specimen-slot {
-  margin-top: 26px;
-  max-width: 540px;
-}
-
-.closing-mark {
-  width: 40px;
-  height: 40px;
-  color: var(--accent);
-  margin-bottom: 22px;
-}
-
-.closing h2 {
-  max-width: 18ch;
-}
-
-.footer-col a {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* Clause labels can be long; inside a reduced specimen they ellipsis rather
-   than push out of the card. */
-.spec-verdict .decisive .badge {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* The eyebrow is long; at phone widths it tightens rather than wrapping to a

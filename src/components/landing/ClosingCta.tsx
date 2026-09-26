@@ -4,7 +4,8 @@ import { ScalesMark } from "./Motif";
 export default function ClosingCta() {
   return (
     <section aria-labelledby="closing-title" className="closing">
-      <div className="lp-wrap closing-grid">
+      <div className="lp-wrap">
+        <div className="closing-band closing-grid">
         <div>
           <ScalesMark className="closing-mark" />
           <h2 id="closing-title">
@@ -26,6 +27,7 @@ export default function ClosingCta() {
           <a className="lp-btn secondary" href="#how">
             Read how it works
           </a>
+        </div>
         </div>
       </div>
     </section>

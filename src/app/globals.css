@@ -1,26 +1,41 @@
-/* Judr — vanilla CSS, no framework. */
+/*
+ * Judr — vanilla CSS, no framework.
+ *
+ * Light silk. A silver canvas with a fixed, blurred diagonal light sweep
+ * behind everything, and frosted-glass surfaces on top of it. Every colour in
+ * the app comes from the tokens below; the class names are shared by the
+ * dashboard and the landing page's specimens, so a change here restyles both.
+ */
 
 :root {
-  --bg: #0b0c0f;
-  --bg-raised: #131519;
-  --bg-sunken: #08090b;
-  --border: #23262d;
-  --border-strong: #32363f;
+  --bg: #f1f1f3;
+  --bg-raised: rgba(255, 255, 255, 0.62);
+  --bg-sunken: #e8e8ed;
+  --border: #dedee5;
+  --border-strong: #c9c9d2;
 
-  --text: #e8e9ec;
-  --text-dim: #9a9ea8;
-  --text-faint: #6b707b;
+  --text: #16161a;
+  --text-dim: #4b4b54;
+  --text-faint: #66666f;
 
-  --accent: #d9a441;
-  --accent-dim: #8a6a2c;
+  /* Brass for text and strokes (reads on silver); gold for fills. */
+  --accent: #8a5c0c;
+  --accent-fill: #d9a441;
+  --accent-dim: #b8873a;
 
-  --ok: #4ba97a;
-  --warn: #d9a441;
-  --bad: #d4634f;
-  --info: #5b8dd9;
+  --ok: #1e7a4c;
+  --warn: #8a5c0c;
+  --bad: #c03d27;
+  --info: #3453c9;
 
-  --radius: 10px;
-  --radius-sm: 6px;
+  /* Glass, after the reference: a top hairline of light and a long soft shadow. */
+  --glass: linear-gradient(180deg, rgba(250, 250, 252, 0.74), rgba(242, 242, 246, 0.52));
+  --glass-strong: linear-gradient(180deg, rgba(251, 251, 253, 0.9), rgba(243, 243, 247, 0.78));
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 20px 45px rgba(25, 25, 40, 0.06);
+  --glass-edge-lift: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 26px 55px rgba(25, 25, 40, 0.1);
+
+  --radius: 16px;
+  --radius-sm: 9px;
 
   --mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -38,6 +53,11 @@ body {
   padding: 0;
 }
 
+html {
+  background: var(--bg);
+  color-scheme: light;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -45,6 +65,20 @@ body {
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  /* Establishes the stacking context the sheen sits behind. */
+  isolation: isolate;
+  min-height: 100dvh;
+}
+
+::selection {
+  background: var(--text);
+  color: var(--bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 a {
@@ -62,6 +96,55 @@ button:disabled {
 }
 
 /* ---------------------------------------------------------------- */
+/* The sheen                                                         */
+/*                                                                   */
+/* A fixed layer larger than the viewport, carrying alternating      */
+/* bands of white and pale grey along a 115° diagonal, blurred until */
+/* only the light remains. Everything else is glass over this.       */
+/* ---------------------------------------------------------------- */
+
+.sheen {
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(30px);
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0) 18%,
+    rgba(255, 255, 255, 0.75) 27%,
+    rgba(255, 255, 255, 0) 34%,
+    rgba(228, 228, 234, 0.55) 46%,
+    rgba(255, 255, 255, 0) 55%,
+    rgba(255, 255, 255, 0.6) 68%,
+    rgba(255, 255, 255, 0) 78%
+  );
+  animation: sheen-drift 48s ease-in-out infinite alternate;
+}
+
+/* A slow breath across the diagonal — enough to feel lit, not enough to notice moving. */
+@keyframes sheen-drift {
+  from {
+    transform: translate3d(-2.5%, -1.5%, 0);
+  }
+  to {
+    transform: translate3d(2.5%, 1.5%, 0);
+  }
+}
+
+@media (max-width: 640px) {
+  .sheen {
+    filter: blur(22px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- */
 /* Shell                                                             */
 /* ---------------------------------------------------------------- */
 
@@ -72,14 +155,20 @@ button:disabled {
 }
 
 .masthead {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
   flex-wrap: wrap;
-  padding: 22px 0 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 18px 0 16px;
   margin-bottom: 24px;
+  border-bottom: 1px solid transparent;
+  background: linear-gradient(180deg, rgba(241, 241, 243, 0.92), rgba(241, 241, 243, 0.72));
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
 }
 
 .brand {
@@ -97,6 +186,15 @@ button:disabled {
 
 .brand .mark {
   color: var(--accent);
+}
+
+.brand h1 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand h1 a:hover .mark {
+  opacity: 0.75;
 }
 
 .brand .tagline {
@@ -122,7 +220,7 @@ button:disabled {
   padding: 3px 9px;
   border-radius: 999px;
   border: 1px solid var(--border-strong);
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.55);
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -132,22 +230,22 @@ button:disabled {
 }
 
 .badge.live {
-  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 40%, transparent);
   color: var(--ok);
 }
 
 .badge.recorded {
-  border-color: color-mix(in srgb, var(--info) 45%, transparent);
+  border-color: color-mix(in srgb, var(--info) 40%, transparent);
   color: var(--info);
 }
 
 .badge.alert {
-  border-color: color-mix(in srgb, var(--bad) 50%, transparent);
+  border-color: color-mix(in srgb, var(--bad) 45%, transparent);
   color: var(--bad);
 }
 
 .badge.ok {
-  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 40%, transparent);
   color: var(--ok);
 }
 
@@ -173,9 +271,12 @@ button:disabled {
 }
 
 .panel {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: var(--radius);
+  box-shadow: var(--glass-edge);
   overflow: hidden;
 }
 
@@ -186,7 +287,6 @@ button:disabled {
   gap: 12px;
   padding: 13px 16px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent);
 }
 
 .panel-head h2 {
@@ -202,32 +302,34 @@ button:disabled {
   padding: 16px;
 }
 
+/* Buttons: ink for the primary action, glass for everything else. */
 .btn {
   padding: 9px 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.6);
   color: var(--text);
   font-size: 14px;
   font-weight: 500;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
 
 .btn:hover:not(:disabled) {
   border-color: var(--text-faint);
-  background: #1a1d22;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #1a1403;
+  background: var(--text);
+  border-color: var(--text);
+  color: #f7f7fa;
   font-weight: 600;
+  box-shadow: 0 8px 20px rgba(22, 22, 26, 0.16);
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: #e4b455;
-  border-color: #e4b455;
+  background: #2a2a31;
+  border-color: #2a2a31;
 }
 
 .btn.danger {
@@ -260,7 +362,7 @@ button:disabled {
   flex-direction: column;
   gap: 20px;
   position: sticky;
-  top: 20px;
+  top: 92px;
 }
 
 .stage {
@@ -345,7 +447,7 @@ button:disabled {
 }
 
 .party-row.winner {
-  background: color-mix(in srgb, var(--ok) 8%, transparent);
+  background: color-mix(in srgb, var(--ok) 9%, transparent);
   margin: 0 -16px;
   padding: 10px 16px;
 }
@@ -379,7 +481,7 @@ button:disabled {
 }
 
 .timeline li:last-child .pip {
-  background: var(--accent);
+  background: var(--accent-fill);
 }
 
 .timeline .label {
@@ -437,8 +539,8 @@ button:disabled {
 /* ---------------------------------------------------------------- */
 
 .guard-flag {
-  border: 1px solid color-mix(in srgb, var(--bad) 35%, transparent);
-  background: color-mix(in srgb, var(--bad) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent);
+  background: color-mix(in srgb, var(--bad) 6%, rgba(255, 255, 255, 0.5));
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   margin-bottom: 10px;
@@ -522,7 +624,7 @@ button:disabled {
 }
 
 .step-head:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .step-num {
@@ -592,7 +694,7 @@ button:disabled {
   display: inline-block;
   width: 7px;
   height: 13px;
-  background: var(--accent);
+  background: var(--accent-fill);
   vertical-align: text-bottom;
   animation: pulse 1s steps(2) infinite;
 }
@@ -620,7 +722,7 @@ button:disabled {
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   margin-bottom: 10px;
-  background: var(--bg-sunken);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .finding-head {
@@ -653,17 +755,17 @@ button:disabled {
 }
 
 .verdict-tag.satisfied {
-  background: color-mix(in srgb, var(--ok) 16%, transparent);
+  background: color-mix(in srgb, var(--ok) 14%, transparent);
   color: var(--ok);
 }
 
 .verdict-tag.breached {
-  background: color-mix(in srgb, var(--bad) 16%, transparent);
+  background: color-mix(in srgb, var(--bad) 13%, transparent);
   color: var(--bad);
 }
 
 .verdict-tag.indeterminate {
-  background: color-mix(in srgb, var(--warn) 16%, transparent);
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
   color: var(--warn);
 }
 
@@ -704,7 +806,7 @@ button:disabled {
 .cite {
   padding: 2px 7px;
   border-radius: 3px;
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.7);
   border: 1px solid var(--border-strong);
   color: var(--text-dim);
 }
@@ -714,7 +816,8 @@ button:disabled {
 /* ---------------------------------------------------------------- */
 
 .verdict-panel {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: var(--glass-strong);
+  box-shadow: var(--glass-edge-lift);
 }
 
 .verdict-hero {
@@ -722,7 +825,7 @@ button:disabled {
   border-bottom: 1px solid var(--border);
   background: linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--accent) 7%, transparent),
+    color-mix(in srgb, var(--accent-fill) 12%, transparent),
     transparent
   );
 }
@@ -759,7 +862,7 @@ button:disabled {
 }
 
 .conf-cell {
-  background: var(--bg-raised);
+  background: rgba(255, 255, 255, 0.55);
   padding: 14px 16px;
 }
 
@@ -883,7 +986,7 @@ button:disabled {
 }
 
 .toggle input {
-  accent-color: var(--accent);
+  accent-color: var(--text);
   width: 15px;
   height: 15px;
   cursor: pointer;
@@ -892,7 +995,7 @@ button:disabled {
 .error-bar {
   padding: 12px 16px;
   border: 1px solid color-mix(in srgb, var(--bad) 40%, transparent);
-  background: color-mix(in srgb, var(--bad) 8%, transparent);
+  background: color-mix(in srgb, var(--bad) 7%, rgba(255, 255, 255, 0.6));
   border-radius: var(--radius-sm);
   color: var(--bad);
   font-size: 13px;
@@ -943,14 +1046,4 @@ button:disabled {
   font-size: 12px;
   color: var(--text-faint);
   word-break: break-all;
-}
-
-/* The wordmark returns to the landing page. */
-.brand h1 a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.brand h1 a:hover .mark {
-  opacity: 0.75;
 }

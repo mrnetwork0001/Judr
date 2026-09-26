@@ -32,6 +32,11 @@ const siteUrl =
 const DESCRIPTION =
   "Autonomous arbitration for tokenized RWA escrow vaults. Evidence in, a verdict with a complete audit trail out, and a vault that settles against it after an appeal window.";
 
+export const viewport = {
+  themeColor: "#f1f1f3",
+  colorScheme: "light" as const,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Judr — Autonomous Arbitration for Tokenized RWA Vaults",
@@ -64,7 +69,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {/* The light sweep every page sits on. Purely decorative; see globals.css. */}
+        <div className="sheen" aria-hidden="true" />
+        {children}
+      </body>
     </html>
   );
 }
