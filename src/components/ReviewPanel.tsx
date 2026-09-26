@@ -12,10 +12,13 @@ export default function ReviewPanel({
   vault,
   onVault,
   disabled,
+  by,
 }: {
   vault: Vault;
   onVault: (v: Vault) => void;
   disabled: boolean;
+  /** The connected wallet; must be signed in as the reviewer. */
+  by: string | null;
 }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -30,7 +33,7 @@ export default function ReviewPanel({
       const res = await fetch("/api/vault", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "review", decision, note }),
+        body: JSON.stringify({ action: "review", decision, note, by }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "review failed");
@@ -55,7 +58,7 @@ export default function ReviewPanel({
         <div className="panel-body">
           <p className="review-note">&ldquo;{r.note}&rdquo;</p>
           <div className="review-meta">
-            Escrow settled to <strong>{r.payee.name}</strong> ·{" "}
+            Escrow paid on-chain to <strong>{r.payee.name}</strong> ·{" "}
             {new Date(r.at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
           </div>
         </div>
@@ -72,8 +75,9 @@ export default function ReviewPanel({
       <div className="panel-body">
         <p className="review-lead">
           Judr has stopped. The verdict for <strong>{vault.verdict?.payee.name}</strong> is
-          frozen until a person decides. Write the reason for your decision — it goes on
-          the record either way.
+          frozen until a person decides. Sign in as the <strong>reviewer</strong> with a
+          wallet, write the reason for your decision, and the escrow is paid on-chain to
+          whoever you decide.
         </p>
         <textarea
           className="review-input"

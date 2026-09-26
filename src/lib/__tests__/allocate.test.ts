@@ -6,7 +6,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkAllocation, RECORDED_DECISION, renderVaults } from "../graph/allocate";
+import { checkAllocation, renderVaults, type AllocationDecision } from "../graph/allocate";
 import { RECORDED_SNAPSHOT } from "../ixs";
 import type { IxsSnapshot } from "../ixs";
 
@@ -14,7 +14,16 @@ const snapshot: IxsSnapshot = RECORDED_SNAPSHOT;
 const permissionless = snapshot.vaults.find((v) => v.permissionless)!;
 const whitelisted = snapshot.vaults.find((v) => !v.permissionless)!;
 
-test("the recorded decision passes policy against the recorded snapshot", () => {
+/** A well-formed proposal for the permissionless vault, as the model would return it. */
+const RECORDED_DECISION: AllocationDecision = {
+  allocate: true,
+  vault_id: permissionless.id,
+  rationale: "Permissionless, redeemable, reported yield above the floor.",
+  expected_hold_days: 30,
+  risks: ["Redemption is finalised on the operator's schedule."],
+};
+
+test("a well-formed proposal for a permissionless vault passes policy", () => {
   const c = checkAllocation(RECORDED_DECISION, snapshot);
   assert.equal(c.accepted, true, c.reasons.join("; "));
   assert.equal(c.vault?.id, permissionless.id);

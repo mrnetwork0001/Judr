@@ -11,11 +11,17 @@
  * They are inert: no buttons, no handlers, nothing focusable.
  */
 
-import { RECORDED } from "@/lib/replay";
 import { screenHeuristic } from "@/lib/guard";
 import { POISONED_EVIDENCE } from "@/lib/fixtures";
+import sample from "@/lib/sample-run.json";
+import type { ArbitrationResult } from "@/lib/types";
 
-const { clauses, evaluation, verdict } = RECORDED;
+/**
+ * A real decision. sample-run.json is the output of a live run of the sample
+ * case on SERV, saved as it came back — nothing in it was written by hand.
+ */
+const RUN = sample as unknown as ArbitrationResult;
+const { clauses, evaluation, verdict } = RUN;
 
 const clauseLabel = (id: string) =>
   clauses.clauses.find((c) => c.id === id)?.label ?? id;
@@ -95,9 +101,12 @@ export function ClauseSpecimen({ className }: { className?: string }) {
   );
 }
 
-/** One clause finding — the decisive one, with both sides recorded. */
+/** One clause finding — a decisive one, with both sides recorded. */
 export function FindingSpecimen({ className }: { className?: string }) {
-  const finding = evaluation.findings.find((f) => f.clause_id === "c4") ?? evaluation.findings[0];
+  const decisive = new Set(verdict.decisive_clauses);
+  const finding = evaluation.findings.find((f) => decisive.has(f.clause_id) && f.finding !== "satisfied")
+    ?? evaluation.findings.find((f) => decisive.has(f.clause_id))
+    ?? evaluation.findings[0];
 
   return (
     <Frame title="Clause finding" meta={finding.clause_id} className={className}>
@@ -172,22 +181,22 @@ export function VerdictSpecimen({ className }: { className?: string }) {
         <div className="confidence">
           <div className="conf-cell">
             <div className="k">Confidence</div>
-            <div className="v ok">100%</div>
+            <div className="v ok">{(RUN.confidence.score * 100).toFixed(0)}%</div>
             <div className="n">stability × citations</div>
           </div>
           <div className="conf-cell">
             <div className="k">Stability</div>
-            <div className="v">3/3</div>
+            <div className="v">{RUN.confidence.consensus.agreed}/{RUN.confidence.consensus.runs}</div>
             <div className="n">runs agreed</div>
           </div>
           <div className="conf-cell">
-            <div className="k">Clause support</div>
-            <div className="v">100%</div>
-            <div className="n">decisive with a finding</div>
+            <div className="k">Cost</div>
+            <div className="v">${RUN.cost.usd.toFixed(2)}</div>
+            <div className="n">{RUN.cost.seconds}s · live on SERV</div>
           </div>
           <div className="conf-cell">
             <div className="k">Citations</div>
-            <div className="v ok">valid</div>
+            <div className={`v ${RUN.verification.passed ? "ok" : "bad"}`}>{RUN.verification.passed ? "valid" : "failed"}</div>
             <div className="n">every id resolves</div>
           </div>
         </div>

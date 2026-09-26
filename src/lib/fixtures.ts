@@ -15,7 +15,7 @@
 import type { DisputeBundle, EvidenceDoc } from "./types";
 
 const CONTRACT_TEXT = `WEB DEVELOPMENT SERVICES AGREEMENT
-Ref: IXS-VLT-4417 — escrowed amount: 10,000.00 USDC
+Ref: IXS-VLT-4417 — escrowed amount: {AMOUNT} USDC
 
 Between: A. Moreau ("the Contractor") and B. Adeyemi ("the Client").
 
@@ -154,7 +154,7 @@ Browser console:
     filename: "project-notes.txt",
     text: `Notes from my side of the project:
 
-- Signed the agreement 2026-08-25, moved 10,000 USDC into the IXS vault same day.
+- Signed the agreement 2026-08-25, moved {AMOUNT} USDC into the IXS escrow same day.
 - Wireframes (Schedule A) sent over 2026-08-26.
 - Asked for a status update 2026-09-01, got a reply the same day saying on track.
 - Expected to see the site on my own domain. That was the whole point of
@@ -195,15 +195,27 @@ export const DEMO_DISPUTE: DisputeBundle = {
     "in the manner required by clause 3, that no written defect notice was received " +
     "within the clause 4 acceptance period, and that the escrow is therefore payable. " +
     "The Client states that the website was never delivered and the escrow should be returned.",
-  plaintiff: { name: "A. Moreau (Contractor)", address: "0xA11CE…4f2b" },
-  defendant: { name: "B. Adeyemi (Client)", address: "0xB0B…91d7" },
+  plaintiff: { name: "A. Moreau (Contractor)", address: "" },
+  defendant: { name: "B. Adeyemi (Client)", address: "" },
   evidence: [...CONTRACTOR_EVIDENCE, ...CLIENT_EVIDENCE],
 };
 
-export function demoDispute(options: { poisoned?: boolean } = {}): DisputeBundle {
-  if (!options.poisoned) return DEMO_DISPUTE;
+/**
+ * The sample case, with the escrow amount that is actually held for it. The
+ * parties and the facts are an example; the money is real testnet USDC.
+ */
+export function demoDispute(options: { poisoned?: boolean; amount?: number } = {}): DisputeBundle {
+  const amount = (options.amount ?? 1).toLocaleString("en-US", { minimumFractionDigits: 2 });
+  const withAmount = (text: string) => text.replace(/\{AMOUNT\}/g, amount);
+  const evidence = [...DEMO_DISPUTE.evidence, ...(options.poisoned ? [POISONED_EVIDENCE] : [])].map((d) => ({
+    ...d,
+    text: withAmount(d.text),
+  }));
   return {
     ...DEMO_DISPUTE,
-    evidence: [...DEMO_DISPUTE.evidence, POISONED_EVIDENCE],
+    contract: { ...DEMO_DISPUTE.contract, text: withAmount(DEMO_DISPUTE.contract.text) },
+    plaintiff: { ...DEMO_DISPUTE.plaintiff, address: "" },
+    defendant: { ...DEMO_DISPUTE.defendant, address: "" },
+    evidence,
   };
 }

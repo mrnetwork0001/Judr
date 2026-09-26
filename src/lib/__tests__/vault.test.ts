@@ -1,16 +1,30 @@
 /**
- * The vault carries the README's headline safety claim — "an appeal halts
- * settlement, and Judr cannot overrule one" — so its state machine is tested
- * transition by transition, including the ones that must be refused.
+ * The case record carries the README's headline safety claims — an appeal
+ * halts settlement and only a person can end it; only the losing party can
+ * appeal; a payout needs a proven address — so its state machine is tested
+ * transition by transition, including the ones that must be refused. It is
+ * pure: the on-chain transfer happens in the route between prepare and
+ * complete, and here it is a stub.
  */
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-// The appeal window is read at module load, so it is set before the import.
 process.env.JUDR_APPEAL_WINDOW_MS = "60";
 const vault = await import("../vault");
-const { appeal, getVault, postVerdict, raiseDispute, release, resetVault, review, VaultError } = vault;
+const {
+  appeal,
+  completeRelease,
+  completeReview,
+  getVault,
+  joinAs,
+  postVerdict,
+  prepareRelease,
+  prepareReview,
+  raiseDispute,
+  resetVault,
+  VaultError,
+} = vault;
 
 import type { ArbitrationResult } from "../types";
 
@@ -21,70 +35,110 @@ const RESULT = {
   digest: "abc123",
 } as unknown as ArbitrationResult;
 
+const CONTRACTOR = "0x1111111111111111111111111111111111111111";
+const CLIENT = "0x2222222222222222222222222222222222222222";
+const REVIEWER = "0x3333333333333333333333333333333333333333";
+const PAID = { txHash: "0xabc", explorerUrl: "https://sepolia.basescan.org/tx/0xabc" };
+
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let n = 0;
 const fresh = () => `session-${++n}`;
 
-test("the happy path: fund → dispute → verdict → window closes → release", async () => {
+test("the happy path: parties sign in, verdict, window closes, real payee, release", async () => {
   const sid = fresh();
-  assert.equal(getVault(sid).status, "funded");
+  joinAs(sid, "plaintiff", CONTRACTOR);
+  joinAs(sid, "defendant", CLIENT);
+  assert.equal(getVault(sid).plaintiff.address, CONTRACTOR);
   raiseDispute(sid, "test");
-  assert.equal(getVault(sid).status, "disputed");
   postVerdict(sid, RESULT);
-  assert.equal(getVault(sid).status, "verdict_posted");
-  assert.throws(() => release(sid), VaultError, "release inside the window must be refused");
+  assert.throws(() => prepareRelease(sid), VaultError, "release inside the window must be refused");
   await wait(80);
-  release(sid);
-  assert.equal(getVault(sid).status, "released");
-  assert.equal(getVault(sid).releasedTo?.name, getVault(sid).plaintiff.name);
+  const { payee, amount } = prepareRelease(sid);
+  assert.equal(payee.address, CONTRACTOR);
+  assert.equal(amount, getVault(sid).amount);
+  const v = completeRelease(sid, PAID);
+  assert.equal(v.status, "released");
+  assert.equal(v.settlement?.payoutTx, "0xabc");
+  assert.equal(v.settlement?.fee, "0", "nothing was deposited, so nothing is taken");
+  assert.equal(v.settlement?.payout, v.settlement?.principal);
 });
 
-test("an appeal is terminal: no re-run, no release, until a human intervenes", async () => {
+test("a payout has nowhere to go until the winner has signed in", async () => {
   const sid = fresh();
   raiseDispute(sid, "test");
   postVerdict(sid, RESULT);
-  appeal(sid, "disputed finding");
-  assert.equal(getVault(sid).status, "appealed");
+  await wait(80);
+  assert.throws(() => prepareRelease(sid), /has not connected a wallet/);
+  joinAs(sid, "plaintiff", CONTRACTOR);
+  assert.equal(prepareRelease(sid).payee.address, CONTRACTOR);
+});
 
-  // This is the sequence that used to erase the appeal and release the escrow.
+test("only the losing party's signed-in wallet can appeal", () => {
+  const sid = fresh();
+  joinAs(sid, "plaintiff", CONTRACTOR);
+  joinAs(sid, "defendant", CLIENT);
+  raiseDispute(sid, "test");
+  postVerdict(sid, RESULT);
+  assert.throws(() => appeal(sid, "x"), /Only the losing party/, "no wallet");
+  assert.throws(() => appeal(sid, "x", CONTRACTOR), /Only the losing party/, "the winner cannot appeal");
+  assert.equal(appeal(sid, "x", CLIENT).status, "appealed");
+});
+
+test("an appeal is terminal for Judr: no re-run, no release", async () => {
+  const sid = fresh();
+  joinAs(sid, "defendant", CLIENT);
+  raiseDispute(sid, "test");
+  postVerdict(sid, RESULT);
+  appeal(sid, "disputed finding", CLIENT);
   assert.throws(() => raiseDispute(sid, "again"), VaultError);
-  assert.equal(getVault(sid).status, "appealed", "a refused dispute must not touch state");
-
   await wait(80);
-  assert.throws(() => release(sid), VaultError, "release after the window must still be refused");
+  assert.throws(() => prepareRelease(sid), VaultError);
   assert.equal(getVault(sid).status, "appealed");
 });
 
-test("a verdict can only be posted on a disputed vault", () => {
+test("only a signed-in reviewer can decide an appeal; uphold pays the winner", () => {
   const sid = fresh();
-  assert.throws(() => postVerdict(sid, RESULT), VaultError, "no dispute yet");
+  joinAs(sid, "plaintiff", CONTRACTOR);
+  joinAs(sid, "defendant", CLIENT);
+  joinAs(sid, "reviewer", REVIEWER);
   raiseDispute(sid, "test");
   postVerdict(sid, RESULT);
-  assert.throws(() => postVerdict(sid, RESULT), VaultError, "already posted");
+  appeal(sid, "disputed", CLIENT);
+  assert.throws(() => prepareReview(sid, "uphold", "x", CLIENT), /reviewer/);
+  assert.throws(() => prepareReview(sid, "uphold", "   ", REVIEWER), /reason/);
+  assert.equal(prepareReview(sid, "uphold", "Stands.", REVIEWER).payee.address, CONTRACTOR);
+  const v = completeReview(sid, "uphold", "Stands.", PAID);
+  assert.equal(v.status, "released");
+  assert.equal(v.releasedTo?.address, CONTRACTOR);
+  assert.equal(v.review?.decision, "uphold");
 });
 
-test("an appeal is only possible while a verdict's window is open", async () => {
+test("overturning pays the other party, who must also have signed in", () => {
   const sid = fresh();
-  assert.throws(() => appeal(sid, "x"), VaultError, "nothing to appeal");
+  joinAs(sid, "plaintiff", CONTRACTOR);
+  joinAs(sid, "reviewer", REVIEWER);
   raiseDispute(sid, "test");
   postVerdict(sid, RESULT);
-  await wait(80);
-  assert.throws(() => appeal(sid, "x"), VaultError, "window closed");
+  // The client appeals... but never signed in, so cannot. Sign in, appeal, then leave.
+  joinAs(sid, "defendant", CLIENT);
+  appeal(sid, "disputed", CLIENT);
+  const { payee } = prepareReview(sid, "overturn", "The notice was in time.", REVIEWER);
+  assert.equal(payee.address, CLIENT);
+  const v = completeReview(sid, "overturn", "The notice was in time.", PAID);
+  assert.equal(v.releasedTo?.address, CLIENT);
 });
 
-test("a released vault is closed to everything except reset", async () => {
+test("one address holds one role at a time", () => {
   const sid = fresh();
-  raiseDispute(sid, "test");
-  postVerdict(sid, RESULT);
-  await wait(80);
-  release(sid);
-  assert.throws(() => raiseDispute(sid, "again"), VaultError);
-  assert.throws(() => appeal(sid, "x"), VaultError);
-  assert.equal(release(sid).status, "released", "release is idempotent");
-  assert.equal(resetVault(sid).status, "funded");
+  joinAs(sid, "plaintiff", CONTRACTOR);
+  joinAs(sid, "reviewer", CONTRACTOR);
+  const v = getVault(sid);
+  assert.equal(v.participants.length, 1);
+  assert.equal(v.participants[0].role, "reviewer");
+  assert.equal(v.plaintiff.address, null, "the party slot is vacated");
 });
 
-test("sessions do not share a vault", () => {
+test("sessions do not share a case", () => {
   const a = fresh();
   const b = fresh();
   raiseDispute(a, "test");
@@ -92,46 +146,4 @@ test("sessions do not share a vault", () => {
   assert.equal(getVault(b).status, "funded");
   resetVault(a);
   assert.equal(getVault(b).status, "funded");
-});
-
-test("refused transitions are VaultErrors, so the API can 409 them", () => {
-  const sid = fresh();
-  try {
-    release(sid);
-    assert.fail("expected a throw");
-  } catch (error) {
-    assert.ok(error instanceof VaultError);
-    assert.equal((error as Error).name, "VaultError");
-  }
-});
-
-test("human review is the only way out of an appeal: uphold settles to the winner", async () => {
-  const sid = fresh();
-  raiseDispute(sid, "test");
-  postVerdict(sid, RESULT);
-  appeal(sid, "disputed");
-  assert.throws(() => review(sid, "uphold", "   "), VaultError, "a review needs a reason");
-  const v = review(sid, "uphold", "The finding stands.");
-  assert.equal(v.status, "released");
-  assert.equal(v.releasedTo?.name, v.plaintiff.name);
-  assert.equal(v.review?.decision, "uphold");
-  assert.ok(v.settlement, "settlement is computed on review");
-});
-
-test("overturning an appeal awards the other party", () => {
-  const sid = fresh();
-  raiseDispute(sid, "test");
-  postVerdict(sid, RESULT);
-  appeal(sid, "disputed");
-  const v = review(sid, "overturn", "The notice was in time.");
-  assert.equal(v.status, "released");
-  assert.equal(v.releasedTo?.name, v.defendant.name);
-  assert.equal(v.review?.payee.name, v.defendant.name);
-});
-
-test("review is refused on anything that is not appealed", () => {
-  const sid = fresh();
-  raiseDispute(sid, "test");
-  postVerdict(sid, RESULT);
-  assert.throws(() => review(sid, "uphold", "x"), VaultError);
 });

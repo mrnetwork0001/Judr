@@ -9,9 +9,9 @@
  * what a signer would send.
  */
 
-import { allocate, checkAllocation, RECORDED_DECISION, type AllocationDecision } from "@/lib/graph/allocate";
+import { allocate, checkAllocation, type AllocationDecision } from "@/lib/graph/allocate";
 import { buildDeposit, ESCROW_AGENT, ixsVaults } from "@/lib/ixs";
-import { hasServKey, servConfig } from "@/lib/serv";
+import { hasServKey } from "@/lib/serv";
 import { sessionFor, withSession } from "@/lib/session";
 import {
   allocationFrom,
@@ -35,35 +35,32 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = sessionFor(request);
   const vault = getVault(session.id);
+  if (!hasServKey()) {
+    return withSession(Response.json({ error: "SERV_API_KEY is not set; the allocation step runs live on SERV." }, { status: 503 }), session);
+  }
   const snapshot = await ixsVaults();
-  const live = hasServKey();
   const startedAt = Date.now();
 
   let decision: AllocationDecision;
   let engine: string;
   let repairs = 0;
   try {
-    if (live) {
-      const result = await allocate({
-        snapshot,
-        escrow: { amount: vault.amount, asset: vault.asset },
-        expectedDays: 30,
-        signal: request.signal,
-      });
-      decision = result.value;
-      engine = result.model;
-      repairs = result.repairs;
-    } else {
-      decision = RECORDED_DECISION;
-      engine = "recorded fixture — no model call";
-    }
+    const result = await allocate({
+      snapshot,
+      escrow: { amount: vault.amount, asset: vault.asset },
+      expectedDays: 30,
+      signal: request.signal,
+    });
+    decision = result.value;
+    engine = result.model;
+    repairs = result.repairs;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return withSession(Response.json({ error: `allocation step failed: ${message}` }, { status: 502 }), session);
   }
 
   const check = checkAllocation(decision, snapshot);
-  const source = live ? "live" : "recorded";
+  const source = "live" as const;
 
   try {
     let outcome: "allocated" | "held" | "cash" | "refused";
@@ -93,7 +90,7 @@ export async function POST(request: Request) {
           label: "Allocating the escrow",
           startedAt,
           endedAt: Date.now(),
-          model: live ? servConfig().model : engine,
+          model: engine,
           validated: true,
           repairs,
         },

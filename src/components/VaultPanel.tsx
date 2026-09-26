@@ -1,7 +1,7 @@
 "use client";
 
 import type { Vault } from "@/lib/vault";
-import type { ArbitrationResult, DisputeBundle } from "@/lib/types";
+import type { ArbitrationResult } from "@/lib/types";
 
 const STATUS_COPY: Record<Vault["status"], { label: string; tone: string }> = {
   funded: { label: "Funded · escrow held", tone: "" },
@@ -13,17 +13,15 @@ const STATUS_COPY: Record<Vault["status"], { label: string; tone: string }> = {
 
 export default function VaultPanel({
   vault,
-  dispute,
   result,
 }: {
   vault: Vault;
-  dispute: DisputeBundle;
   result: ArbitrationResult | null;
 }) {
   const status = STATUS_COPY[vault.status];
   // Who the escrow went (or is going) to: a review can overturn the verdict.
   const winner = vault.releasedTo
-    ? vault.releasedTo.address === vault.plaintiff.address
+    ? vault.releasedTo.name === vault.plaintiff.name
       ? "plaintiff"
       : "defendant"
     : result?.verdict.winner;
@@ -47,8 +45,8 @@ export default function VaultPanel({
         <div style={{ marginTop: 16 }}>
           <div className={`party-row ${winner === "plaintiff" ? "winner" : ""}`}>
             <div className="who">
-              <div className="name">{dispute.plaintiff.name}</div>
-              <div className="addr">{dispute.plaintiff.address}</div>
+              <div className="name">{vault.plaintiff.name}</div>
+              <div className="addr">{vault.plaintiff.address ?? "no wallet signed in"}</div>
             </div>
             <div className="role">
               {winner === "plaintiff" ? "awarded" : "plaintiff"}
@@ -56,8 +54,8 @@ export default function VaultPanel({
           </div>
           <div className={`party-row ${winner === "defendant" ? "winner" : ""}`}>
             <div className="who">
-              <div className="name">{dispute.defendant.name}</div>
-              <div className="addr">{dispute.defendant.address}</div>
+              <div className="name">{vault.defendant.name}</div>
+              <div className="addr">{vault.defendant.address ?? "no wallet signed in"}</div>
             </div>
             <div className="role">
               {winner === "defendant" ? "awarded" : "defendant"}

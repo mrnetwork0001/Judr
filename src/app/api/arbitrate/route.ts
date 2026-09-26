@@ -30,17 +30,15 @@ interface ArbitrateRequest {
 export async function POST(request: Request) {
   const session = sessionFor(request);
   const body = (await request.json().catch(() => ({}))) as ArbitrateRequest;
-  // One condition, used for the label and for the run, so they cannot disagree.
-  const replay = !hasServKey();
+  if (!hasServKey()) {
+    return withSession(
+      Response.json({ error: "SERV_API_KEY is not set. Judr decides cases live on SERV and has no recorded fallback." }, { status: 503 }),
+      session,
+    );
+  }
 
   let bundle;
   if (body.custom) {
-    if (replay) {
-      return withSession(
-        Response.json({ error: "Custom disputes need a live SERV key; the recorded run can only decide the demo case." }, { status: 409 }),
-        session,
-      );
-    }
     const gate = allowCustomRun(session.id);
     if (!gate.allowed) {
       return withSession(
@@ -61,12 +59,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    raiseDispute(
-      session.id,
-      replay
-        ? "Escrow release contested — arbitration requested (recorded run)"
-        : "Escrow release contested — arbitration requested",
-    );
+    raiseDispute(session.id, "Escrow release contested — arbitration requested");
   } catch (error) {
     const status = error instanceof VaultError ? 409 : 500;
     return withSession(
@@ -91,15 +84,10 @@ export async function POST(request: Request) {
         }
       };
 
-      send({
-        type: "step_started",
-        step: "mode",
-        label: replay ? "Recorded run (no SERV key configured)" : "Live run against SERV",
-        at: Date.now(),
-      });
+      send({ type: "step_started", step: "mode", label: "Live run against SERV", at: Date.now() });
 
       try {
-        const result = await runArbitration({ bundle, emit: send, signal: abort.signal, replay });
+        const result = await runArbitration({ bundle, emit: send, signal: abort.signal });
         postVerdict(session.id, result);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

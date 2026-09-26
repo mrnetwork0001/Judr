@@ -55,13 +55,7 @@ export default function AllocationPanel({
     <div className="panel">
       <div className="panel-head">
         <h2>Escrow allocation</h2>
-        {a ? (
-          <span className={`badge ${a.source === "live" ? "live" : "recorded"}`}>
-            {a.source === "live" ? "agent decision" : "recorded"}
-          </span>
-        ) : (
-          <span className="badge">cash</span>
-        )}
+        {a ? <span className="badge live">agent decision · not executed</span> : <span className="badge">cash</span>}
       </div>
 
       <div className="panel-body">
@@ -91,7 +85,9 @@ export default function AllocationPanel({
             </div>
           </>
         ) : (
-          <p className="alloc-why">The escrow is held as cash and earns nothing while the dispute is open.</p>
+          <p className="alloc-why">
+            The escrow is held as USDC in the agent&rsquo;s wallet. Ask the agent where it should sit: it reads IXS&rsquo;s live vault list and proposes a vault or cash, and the policy decides. The deposit itself is built, not sent — the agent is on Base Sepolia and IXS vaults are on Avalanche and BSC mainnet.
+          </p>
         )}
 
         <div className="controls" style={{ marginTop: 14 }}>

@@ -151,21 +151,3 @@ ${renderVaults(snapshot)}`,
     ],
   });
 }
-
-/**
- * The recorded decision, for runs without a key. It is what the live step
- * produced against the same list on 2026-09-26, and it is labelled recorded
- * wherever it is shown.
- */
-export const RECORDED_DECISION: AllocationDecision = {
-  allocate: true,
-  vault_id: "6a952729732c2b84b55ce89d",
-  rationale:
-    "Both permissionless vaults report the same 3.07% trailing yield, so access and settlement decide it. The Avalanche IXHYB vault is the one whose totals can be verified on-chain from here, its underlying is native USDC with six decimals, and the escrow agent needs no whitelist to subscribe. Redemption is asynchronous under ERC-7540, so a redeem request should be lodged as soon as the verdict is posted rather than when the appeal window closes, to give the operator time to finalise before payout.",
-  expected_hold_days: 30,
-  risks: [
-    "Redemption is finalised by the vault operator on its own schedule; if it lags the appeal window, payout waits on it.",
-    "The reported yield is trailing twelve months, not a guarantee of the next thirty days.",
-    "The vault is small (hundreds of USDC of total assets); a 10,000 USDC subscription would dominate it.",
-  ],
-};

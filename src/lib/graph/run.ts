@@ -10,7 +10,6 @@ import { createHash } from "node:crypto";
 import { estimateUsd, hasServKey, servConfig } from "../serv";
 import { screenEvidence } from "../guard";
 import { adjudicate, classifyClaim, evaluateEvidence, extractClauses } from "./steps";
-import { loadReplay } from "../replay";
 import type {
   ArbitrationEvent,
   ArbitrationResult,
@@ -33,8 +32,6 @@ export interface RunOptions {
   bundle: DisputeBundle;
   emit: Emit;
   signal?: AbortSignal;
-  /** Force the recorded run even when a key is present. */
-  replay?: boolean;
 }
 
 export async function runArbitration(opts: RunOptions): Promise<ArbitrationResult> {
@@ -44,8 +41,8 @@ export async function runArbitration(opts: RunOptions): Promise<ArbitrationResul
 
   emit({ type: "run_started", disputeId, vaultId: bundle.vaultId, at: startedAt });
 
-  if (opts.replay || !hasServKey()) {
-    return replayRun(disputeId, bundle, emit, startedAt, signal);
+  if (!hasServKey()) {
+    throw new Error("SERV_API_KEY is not set. Judr decides cases live on SERV and has no recorded fallback.");
   }
 
   const trail: StepRecord[] = [];
@@ -418,28 +415,6 @@ export function deriveConfidence(
     clause_support: Number(clauseSupport.toFixed(3)),
     verified: verification.passed,
   };
-}
-
-/* ---------------------------------------------------------------- */
-/* Replay                                                            */
-/* ---------------------------------------------------------------- */
-
-async function replayRun(
-  disputeId: string,
-  bundle: DisputeBundle,
-  emit: Emit,
-  startedAt: number,
-  signal?: AbortSignal,
-): Promise<ArbitrationResult> {
-  const result = await loadReplay({
-    disputeId,
-    bundle,
-    emit,
-    startedAt,
-    signal,
-  });
-  emit({ type: "run_done", result });
-  return result;
 }
 
 /* ---------------------------------------------------------------- */

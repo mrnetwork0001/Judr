@@ -258,13 +258,3 @@ export function buildRedeem(vault: IxsVaultSummary, account: Address, sharesHuma
 
 /** The address Judr's escrow agent would sign from. A placeholder until a signer exists. */
 export const ESCROW_AGENT: Address = "0x00000000000000000000000000000000000001cd";
-
-/**
- * The allocation the demo escrow starts with: placed into the permissionless
- * Avalanche vault on the day it was funded, at the rate IXS reported in the
- * recorded snapshot. Its call data is built by the SDK so the trail shows
- * exactly what a signer would have sent. Labelled recorded wherever shown.
- */
-export const INITIAL_ALLOCATION_VAULT = RECORDED[0];
-export const INITIAL_ALLOCATION_AT = Date.parse("2026-08-25T10:06:00Z");
-export const INITIAL_DEPOSIT_TX = buildDeposit(INITIAL_ALLOCATION_VAULT, ESCROW_AGENT, "10000");

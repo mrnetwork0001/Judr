@@ -10,9 +10,15 @@ it — after an appeal window, never on a model's say-so.
 
 ![Judr arbitrating a dispute live on SERV: evidence screened, a tampered document quarantined, seven typed steps, a verdict with derived confidence and its price](docs/demo.gif)
 
-A decision on the demo case, live on SERV: **$0.03, 25 seconds, 13,472
+A decision on the sample case, live on SERV: **$0.03, 25 seconds, 13,472
 tokens** — against $3,000+ and 6–12 weeks for a human arbitrator. A visitor's
 own case, pasted in: $0.02 and 23 seconds.
+
+Nothing in the app is simulated. Decisions run live on SERV or not at all;
+the escrow is real USDC held by an agent wallet on Base, run through Coinbase
+AgentKit; parties are wallets that proved themselves by signature; the payout
+is an on-chain transfer with a BaseScan link. The one thing not executed — an
+IXS vault deposit — is built, shown, and labelled as not executed.
 
 ---
 
@@ -89,7 +95,27 @@ one, and the vault enforces that itself — the check lives with the funds, not
 with the caller.
 
 This is the answer to the obvious objection. Being wrong should cost a delay,
-not somebody's ten thousand dollars.
+not somebody's money.
+
+## Real money, real parties
+
+The escrow is held by an **agent wallet on Base**, operated through Coinbase
+AgentKit's CDP wallet provider. On Base Sepolia the agent tops itself up from
+Coinbase's faucet; on Base mainnet you fund its address. When a case settles —
+the appeal window closing, or a reviewer deciding an appeal — the agent sends
+the escrow to the winner as an ERC-20 transfer, and the case shows the hash.
+
+Parties are **wallets, proven by signature**. A visitor connects a wallet and
+signs a message naming the case, the role and their session; the server
+verifies it. That address is then where the payout goes and where an appeal
+must come from: only the losing party's signed-in wallet can appeal, and only
+a wallet signed in as the reviewer can decide one. One address holds one role
+at a time, so a single wallet can walk the whole flow — join as the Client to
+appeal, as the Reviewer to decide, as the Contractor to be paid.
+
+A public demo that pays whoever wins is a faucet unless bounded. Payouts are
+capped per address per day and by a daily outflow ceiling, and can be switched
+off; on mainnet the defaults are one payout per address and 5 USDC a day.
 
 ## Escrow that earns — the IXS integration and the business model
 
@@ -114,9 +140,11 @@ How it works:
 - **Transactions are built with `@ixswap1/vault-agent-sdk`** as ERC-7540
   `requestDeposit` / `requestRedeem` call data and shown in the trail exactly
   as a signer would send them. Judr holds no key and signs nothing.
-- **At release** the yield accrued over the allocation window is split: a
-  quarter to Judr with a 20 USDC floor that applies only when yield covers
-  it, the rest to the winning party on top of principal.
+- **At release** the yield the escrow would have earned over the case at the
+  vault's live rate is shown as a **projection**, and the fee model — a quarter
+  of yield with a 20 USDC floor, never touching principal — is stated. In this
+  build the deposit is not executed (the agent is on Base; the vaults are on
+  Avalanche and BSC), so the fee taken is zero and the payout is principal.
 
 Worked example at the rate IXS reports today: 10,000 USDC held 32 days at
 3.07% earns 26.91. A quarter of that is 6.73, below the floor, so Judr takes
@@ -179,17 +207,17 @@ npm run dev
 
 Open http://localhost:3000.
 
-**Without a key**, Judr runs in replay mode: a recorded run plays back through
-the same verification, confidence and settlement logic, labelled `RECORDED RUN`
-in the UI and `recorded fixture — no model call` in the audit trail. Evidence
-screening is deterministic, so the injection demo is genuinely live either way.
-A recorded run is never presented as a live one.
+**There is no recorded mode.** Without `SERV_API_KEY` the app refuses to
+arbitrate and says why; without CDP keys it refuses to pay out and says why.
+The sample case's parties and facts are an example; the money, the decisions,
+the signatures and the transfers are not.
 
 `?autorun=1` starts a run on load and `?poisoned=1` preloads the tampered
 bundle — both for capturing a demo recording hands-free.
 
 ```bash
-npm test          # 52 unit tests, no framework, no build step
+npm test          # 50 unit tests, no framework, no build step
+node scripts/e2e-gating.mjs   # wallet gating end to end, real signatures, against a running app
 npm run typecheck
 npm run build
 ```
@@ -205,8 +233,9 @@ long-lived process**. Serverless hosts split the arbitration stream and the
 vault read across instances and the settlement panel never sees the verdict.
 
 `render.yaml` is a one-click Render blueprint; the `Dockerfile` runs anywhere
-that runs a container. Leave `SERV_API_KEY` unset for a public demo and it
-serves the recorded run, labelled as such.
+that runs a container. Set `SERV_API_KEY` and the three `CDP_*` values in the
+host's environment. `CDP_NETWORK=base` moves the agent to mainnet; fund its
+address first and keep the payout caps.
 
 ## Layout
 
@@ -217,7 +246,9 @@ serves the recorded run, labelled as such.
 | [`src/lib/graph/schema.ts`](src/lib/graph/schema.ts) | Step schemas and the validator |
 | [`src/lib/serv.ts`](src/lib/serv.ts) | SERV client: schema-bound calls, local re-validation, bounded repair, retry |
 | [`src/lib/guard.ts`](src/lib/guard.ts) | Evidence screening |
-| [`src/lib/vault.ts`](src/lib/vault.ts) | Escrow vault — state machine, allocation, appeal window, yield-split release |
+| [`src/lib/vault.ts`](src/lib/vault.ts) | The case record — parties, appeal window, prepare/complete settlement; pure |
+| [`src/lib/escrow.ts`](src/lib/escrow.ts) | The escrow agent — AgentKit wallet on Base, faucet, capped payouts |
+| [`src/lib/identity.ts`](src/lib/identity.ts) | Wallet as identity — signed join messages, verified server-side |
 | [`src/lib/ixs.ts`](src/lib/ixs.ts) | IXS: live vault list, on-chain reads, unsigned ERC-7540 transactions |
 | [`src/lib/graph/allocate.ts`](src/lib/graph/allocate.ts) | The SERV allocation step and the deterministic policy |
 | [`src/lib/yield.ts`](src/lib/yield.ts) | Yield accrual and the fee split |
@@ -226,42 +257,28 @@ serves the recorded run, labelled as such.
 | [`src/app/api/arbitrate/route.ts`](src/app/api/arbitrate/route.ts) | SSE stream of the run |
 
 Next.js 16, React 19, vanilla CSS. No UI framework, no state library, no test
-framework. Runtime dependencies: Next; Three.js for the landing page's
+framework. Runtime dependencies: Next; Coinbase AgentKit (with the CDP SDK and
+viem) for the escrow agent; Three.js for the landing page's
 scroll-driven helix (loaded after hydration, landing only, and the page is
 complete without it); and IXS's `@ixswap1/vault-agent-sdk` with `viem` for
 vault reads and unsigned transactions.
 
 ## Honest limits
 
-- **The escrow itself is a mock.** The vault Judr arbitrates over is an
-  in-memory state machine, not a deployed contract; the state machine and the
-  verdict digest are what a real deployment would keep, the storage is not.
-- **The IXS integration reads live and builds unsigned transactions; it does
-  not sign or broadcast.** Vault list, whitelist status and reported yield
-  come from IXS's API; totals and share price for the Avalanche vault are read
-  on-chain. Subscription and redemption requests are built with IXS's SDK and
-  shown as call data. No escrow agent wallet exists yet, so nothing is sent —
-  and IXS's testnets currently have no public test USDC, so a testnet deposit
-  was not an option in the time available. Yield in the demo accrues at the
-  rate IXS reports, from the recorded allocation date; it is arithmetic over a
-  reported rate, not a claimed position.
-- **A public deploy without a key serves the recorded run.** The live path
-  was exercised end to end against SERV during development — the demo case,
-  the tampered variant, an original custom case and the allocation step, no
-  schema repairs needed — and the recording in this README is of a live run.
-  Set `SERV_API_KEY` on the deployment to decide cases live; without it the UI
-  says `RECORDED RUN` and custom disputes are refused.
-- **In replay mode the stability figure is a recorded result.** The consensus
-  step does not re-decide anything during playback; it is labelled as such in
-  the feed and the trail. Only a live run measures stability.
-- **SERV is used through its OpenAI-compatible endpoint.** The graph, the
-  schema enforcement, the repair loop and the verification are Judr's own
-  code on top of ordinary chat completions. SERV's native guard and
-  verification tooling is not wired in.
-- **Evidence is pre-extracted to text.** PDF and image ingest is not
-  implemented; the fixtures are committed as text and uploaded documents would
-  take the same path.
+- **The IXS deposit is not executed.** The agent's wallet is on Base; IXS's
+  permissionless vaults are on Avalanche and BSC mainnet, and IXS's testnets
+  have no public test USDC. The allocation decision is live, the policy is
+  real, the subscription and redemption call data are built with IXS's SDK and
+  shown — and none of it is sent. Yield is therefore a projection at the live
+  rate, the fee taken is zero, and the payout is principal.
+- **The escrow is small and capped.** It is real USDC, but faucet-sized on
+  testnet and pocket-money on mainnet, with payouts capped per address and
+  per day. The caps live in memory and reset with the process.
+- **The sample case is an example.** A. Moreau, B. Adeyemi and their emails
+  are written; the reasoning about them is not. Bring your own case for a
+  decision on real facts.
+- **Evidence is text.** PDF and image ingest is not implemented.
 - **Verification checks that citations resolve, not that reasoning is sound.**
   It catches a verdict citing a clause that does not exist. It cannot catch a
   verdict that cites a real clause and reasons badly about it — that is what
-  the appeal window is for.
+  the appeal window and the reviewer are for.

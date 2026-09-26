@@ -164,15 +164,26 @@ function Settlement({
     return (
       <div className="settlement settlement-split">
         <div className="note">
-          Escrow released to {vault.releasedTo?.name} — {vault.releasedTo?.address}.
-          The appeal window closed without challenge.
-          {s && vault.allocation && (
+          {s?.payoutTx ? (
+            <>
+              <strong>{s.display.payout} {vault.asset}</strong> paid on Base Sepolia to {vault.releasedTo?.name} —{" "}
+              <span className="mono">{vault.releasedTo?.address}</span>.{" "}
+              <a href={s.payoutUrl} target="_blank" rel="noreferrer">View the transaction ↗</a>
+            </>
+          ) : (
+            <>Escrow released to {vault.releasedTo?.name}.</>
+          )}
+          {s && (
             <dl className="ledger">
               <dt>Principal</dt>
               <dd>{s.display.principal}</dd>
-              <dt>Yield earned · {s.days} days in {vault.allocation.symbol}</dt>
-              <dd>+ {s.display.yieldEarned}</dd>
-              <dt>Judr fee · from yield only{s.feeCapped ? " (capped at yield)" : ""}</dt>
+              {vault.allocation && (
+                <>
+                  <dt>Projected yield · {s.days} days at {(vault.allocation.rate * 100).toFixed(2)}% in {vault.allocation.symbol} — not executed</dt>
+                  <dd>({s.display.projectedYield})</dd>
+                </>
+              )}
+              <dt>Judr fee · from yield only</dt>
               <dd>− {s.display.fee}</dd>
               <dt className="total">Paid to {vault.releasedTo?.name}</dt>
               <dd className="total">{s.display.payout} {vault.asset}</dd>
@@ -180,7 +191,7 @@ function Settlement({
           )}
           {s?.redeemTx && (
             <div className="alloc-tx">
-              <span className="k">unsigned redemption · chain {s.redeemTx.chainId}</span>
+              <span className="k">IXS redemption a signer would send · chain {s.redeemTx.chainId} · unsigned</span>
               <code>
                 {s.redeemTx.functionName}({s.redeemTx.args.join(", ")}) → {s.redeemTx.address}
               </code>
@@ -188,7 +199,7 @@ function Settlement({
           )}
         </div>
         <span className="badge ok">
-          <span className="dot" /> Settled
+          <span className="dot" /> Settled on-chain
         </span>
       </div>
     );
@@ -227,7 +238,7 @@ function Settlement({
         )}
       </div>
       <div className="actions">
-        <button className="btn danger small" onClick={onAppeal} disabled={busy || !windowOpen}>
+        <button className="btn danger small" onClick={onAppeal} disabled={busy || !windowOpen} title="Only the losing party's signed-in wallet can appeal">
           Lodge appeal
         </button>
         <button

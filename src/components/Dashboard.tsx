@@ -8,6 +8,8 @@ import AllocationPanel from "./AllocationPanel";
 import CustomDispute from "./CustomDispute";
 import ReviewPanel from "./ReviewPanel";
 import VaultPanel from "./VaultPanel";
+import WalletConnect from "./WalletConnect";
+import type { EscrowStatus } from "@/lib/escrow";
 import type { CustomDisputeInput } from "@/lib/custom";
 import VerdictPanel from "./VerdictPanel";
 import type {
@@ -37,11 +39,14 @@ export default function Dashboard({
   dispute,
   poisonedDispute,
   liveCapable,
+  escrow,
 }: {
   initialVault: Vault;
   dispute: DisputeBundle;
   poisonedDispute: DisputeBundle;
   liveCapable: boolean;
+  /** The escrow agent's real address and balances, read on the server. */
+  escrow: EscrowStatus;
 }) {
   const [vault, setVault] = useState<Vault>(initialVault);
   const [steps, setSteps] = useState<StepView[]>([]);
@@ -53,6 +58,13 @@ export default function Dashboard({
   const [poisoned, setPoisoned] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [mode, setMode] = useState<"live" | "recorded" | null>(null);
+  // The wallet this browser signed in with, learned from the join response.
+  const [wallet, setWallet] = useState<string | null>(null);
+  const onVaultWithWallet = (v: Vault) => {
+    setVault(v);
+    const last = v.participants[v.participants.length - 1];
+    if (last) setWallet(last.address);
+  };
 
   // The app is one screen of state with several pages over it. The page lives
   // in the URL hash so a view is linkable and the back button works, and a
@@ -245,7 +257,8 @@ export default function Dashboard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action,
-          reason: "The Client disputes the finding on the acceptance window",
+          reason: "The losing party disputes the decisive finding",
+          by: wallet,
         }),
       });
       const data = await response.json();
@@ -256,7 +269,7 @@ export default function Dashboard({
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [wallet]);
 
   const reset = useCallback(async () => {
     abortRef.current?.abort();
@@ -280,10 +293,11 @@ export default function Dashboard({
   const [mountedAt] = useState(() => Date.now());
   const accrued = useMemo(() => {
     if (!vault.allocation) return null;
-    const days = Math.max(0, Math.floor((mountedAt - vault.allocation.at) / 86_400_000));
+    const opened = vault.funding?.at ?? vault.events[0]?.at ?? mountedAt;
+    const days = Math.max(0, Math.floor((mountedAt - opened) / 86_400_000));
     const principal = BigInt(Math.round(vault.amount * 1_000_000));
     return { days, amount: formatMinor(accrue(principal, vault.allocation.rate, days), 6) };
-  }, [vault.allocation, vault.amount, mountedAt]);
+  }, [vault.allocation, vault.amount, vault.funding, vault.events, mountedAt]);
 
   const runDisputeFromAnywhere = () => {
     go("dispute");
@@ -319,24 +333,26 @@ export default function Dashboard({
         </nav>
 
         <div className="app-side-card">
-          {mode === "live" && (
-            <span className="badge live"><span className="dot pulse" /> Live · SERV</span>
-          )}
-          {mode === "recorded" && (
-            <span className="badge recorded"><span className="dot" /> Recorded run</span>
-          )}
-          {mode === null && (
-            <span className={`badge ${liveCapable ? "live" : "recorded"}`}>
-              {liveCapable ? "SERV key configured" : "No SERV key · replay"}
+          <WalletConnect vault={vault} onVault={onVaultWithWallet} chain={escrow.chain} compact />
+          <div className="side-agent">
+            <span className={`badge ${escrow.configured && !escrow.error ? "live" : "alert"}`}>
+              {escrow.configured && !escrow.error ? `escrow agent · ${escrow.chain.name}` : "escrow agent not configured"}
             </span>
-          )}
-          <p>
-            {liveCapable
-              ? "Decisions run live against SERV. Each visitor has their own vault."
-              : "Without a key the demo replays a recorded decision, labelled as such."}
-          </p>
+            {escrow.address && (
+              <p className="mono">
+                <a href={`${escrow.explorer}/address/${escrow.address}`} target="_blank" rel="noreferrer">
+                  {escrow.address.slice(0, 6)}…{escrow.address.slice(-4)}
+                </a>
+                {escrow.usdc !== undefined && ` · ${Number(escrow.usdc).toFixed(2)} USDC`}
+              </p>
+            )}
+            {escrow.error && <p className="err">{escrow.error}</p>}
+          </div>
+          <span className={`badge ${liveCapable ? "live" : "alert"}`}>
+            {mode === "live" || liveCapable ? <><span className={`dot ${running ? "pulse" : ""}`} /> Live · SERV</> : "No SERV key"}
+          </span>
           <button className="btn small" onClick={reset} disabled={running || busy}>
-            Reset demo
+            Reset case
           </button>
         </div>
       </aside>
@@ -365,18 +381,17 @@ export default function Dashboard({
                 label="Escrow"
                 value={`${vault.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
                 unit={vault.asset}
-                caption={`${vault.id} · ${STATUS_LABEL[vault.status]}`}
+                caption={vault.funding ? `held by the agent on ${escrow.chain.name} · ${STATUS_LABEL[vault.status]}` : `${vault.id} · ${STATUS_LABEL[vault.status]}`}
               />
               <StatTile
-                label="Escrow yield"
+                label="Projected yield"
                 value={vault.allocation ? `+${accrued?.amount ?? "0.00"}` : "—"}
                 unit={vault.allocation ? vault.asset : undefined}
                 caption={
                   vault.allocation
-                    ? `${vault.allocation.symbol} · ${(vault.allocation.rate * 100).toFixed(2)}% TTM · ${accrued?.days ?? 0} days`
-                    : "held as cash"
+                    ? `${vault.allocation.symbol} · ${(vault.allocation.rate * 100).toFixed(2)}% TTM · ${accrued?.days ?? 0} days · not executed`
+                    : "agent has not been asked yet"
                 }
-                tone={vault.allocation ? "ok" : undefined}
               />
               <StatTile
                 label="Verdict"
@@ -410,7 +425,7 @@ export default function Dashboard({
             </div>
 
             <div className="app-grid-2">
-              <VaultPanel vault={vault} dispute={activeDispute} result={result} />
+              <VaultPanel vault={vault} result={result} />
               <div className="panel">
                 <div className="panel-head"><h2>Walk-through</h2></div>
                 <div className="panel-body">
@@ -424,7 +439,10 @@ export default function Dashboard({
                       <button className="link" onClick={() => { setPoisoned(true); go("dispute"); }} disabled={running}>Set it up →</button>
                     </li>
                     <li>
-                      <strong>Appeal, then review.</strong> An appeal freezes the escrow; a person upholds or overturns on the record.
+                      <strong>Sign in with a wallet.</strong> Join as the Client to appeal, as the Reviewer to decide, as the Contractor to be paid — real USDC on {escrow.chain.name}.
+                    </li>
+                    <li>
+                      <strong>Appeal, then review.</strong> An appeal freezes the escrow; the reviewer upholds or overturns on the record and the payout goes on-chain.
                     </li>
                     <li>
                       <strong>Bring your own case.</strong> Paste a contract and evidence and get a live decision.
@@ -485,7 +503,13 @@ export default function Dashboard({
             {result && (
               <>
                 <VerdictPanel result={result} vault={vault} busy={busy} onAppeal={() => vaultAction("appeal")} onRelease={() => vaultAction("release")} />
-                <ReviewPanel vault={vault} onVault={setVault} disabled={running || busy} />
+                <div className="panel">
+                  <div className="panel-head"><h2>Who you are</h2><span className="badge">{vault.participants.length} signed in</span></div>
+                  <div className="panel-body">
+                    <WalletConnect vault={vault} onVault={onVaultWithWallet} chain={escrow.chain} />
+                  </div>
+                </div>
+                <ReviewPanel vault={vault} onVault={onVaultWithWallet} disabled={running || busy} by={wallet} />
               </>
             )}
           </>

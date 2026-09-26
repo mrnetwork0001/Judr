@@ -42,15 +42,17 @@ export default async function Escrow() {
             Idle escrow is dead capital. <em>Judr puts it to work.</em>
           </h2>
           <p className="lead">
-            While a dispute is open the escrow does not sit in a wallet. A SERV reasoning
-            step reads IXS&rsquo;s live vault list and places it in a licensed real-world-asset
-            yield vault; a deterministic policy refuses anything it cannot reach or should
+            While a dispute is open the escrow need not sit idle. A SERV reasoning step
+            reads IXS&rsquo;s live vault list and proposes a licensed real-world-asset yield
+            vault or cash; a deterministic policy refuses anything it cannot reach or should
             not hold. At settlement the escrow is redeemed, Judr takes its fee from the
             yield, and the winner receives principal plus what is left.
           </p>
           <p className="lead" style={{ marginTop: 14 }}>
             That is the business model. Nobody pays out of pocket to have a dispute
-            decided; the time the money was stuck pays for it.
+            decided; the time the money was stuck pays for it. In this build the deposit
+            is built and shown, not sent — the agent is on Base, the vaults are on
+            Avalanche and BSC — so the figures below are a projection at the live rate.
           </p>
         </div>
 
@@ -58,7 +60,7 @@ export default async function Escrow() {
           <div className="worked">
             <div className="worked-head">
               <span className="eyebrow" style={{ color: "var(--text-faint)" }}>
-                Worked example · {usd(EXAMPLE_PRINCIPAL)} USDC · {EXAMPLE_DAYS} days
+                Projection · {usd(EXAMPLE_PRINCIPAL)} USDC · {EXAMPLE_DAYS} days · not executed
               </span>
             </div>
             <dl className="ledger ledger-lg">

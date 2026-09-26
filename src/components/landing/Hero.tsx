@@ -13,7 +13,7 @@ const delay = (seconds: number): CSSProperties => ({ animationDelay: `${seconds}
 const ASSURANCES = [
   "Every verdict names the clause that decided it",
   "Confidence is measured across re-runs, never self-reported",
-  "Funds move only after an appeal window closes unchallenged",
+  "Funds move on-chain only after an appeal window closes unchallenged",
 ];
 
 /*
@@ -36,8 +36,8 @@ function HeroVignette() {
         </div>
       </div>
       <FigCaption label="Fig. 1">
-        Judr&rsquo;s own interface, telling one story. A. Moreau, B. Adeyemi and vault
-        IXS-VLT-4417 are fictional; the reasoning is the recorded run.
+        Judr&rsquo;s own interface, telling one story. A. Moreau and B. Adeyemi are a sample
+        case; the reasoning shown is a real decision, made live on SERV and saved as it came back.
       </FigCaption>
     </figure>
   );
