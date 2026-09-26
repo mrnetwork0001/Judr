@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import type { IxsSnapshot } from "@/lib/ixs";
+import { accrue, formatMinor } from "@/lib/yield";
 import AllocationPanel from "./AllocationPanel";
 import CustomDispute from "./CustomDispute";
 import ReviewPanel from "./ReviewPanel";
@@ -51,6 +53,24 @@ export default function Dashboard({
   const [poisoned, setPoisoned] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [mode, setMode] = useState<"live" | "recorded" | null>(null);
+
+  // The app is one screen of state with several pages over it. The page lives
+  // in the URL hash so a view is linkable and the back button works, and a
+  // run keeps going while the visitor looks elsewhere.
+  const [page, setPage] = useState<Page>("overview");
+  useEffect(() => {
+    const read = () => {
+      const h = window.location.hash.replace("#", "") as Page;
+      setPage(PAGES.some((p) => p.id === h) ? h : "overview");
+    };
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
+  const go = useCallback((next: Page) => {
+    window.location.hash = next;
+    setPage(next);
+  }, []);
 
   const abortRef = useRef<AbortController | null>(null);
   // A visitor's own case, shown in the rail while it runs. Cleared on reset.
@@ -208,12 +228,13 @@ export default function Dashboard({
 
     autoStarted.current = true;
     setTimeout(() => {
+      if (wantsRun) go("dispute");
       setPoisoned(wantsPoison);
       // Passed explicitly: the state set above is not yet visible to run()'s
       // closure.
       if (wantsRun) void run(wantsPoison);
     }, 400);
-  }, [run]);
+  }, [run, go]);
 
   const vaultAction = useCallback(async (action: "appeal" | "release" | "reset") => {
     setBusy(true);
@@ -253,163 +274,318 @@ export default function Dashboard({
     [flags],
   );
 
+  const quarantinedCount = quarantined.size;
+  // Read once at mount: accrual is counted in whole days, so a stale "now" is
+  // fine and keeps render pure.
+  const [mountedAt] = useState(() => Date.now());
+  const accrued = useMemo(() => {
+    if (!vault.allocation) return null;
+    const days = Math.max(0, Math.floor((mountedAt - vault.allocation.at) / 86_400_000));
+    const principal = BigInt(Math.round(vault.amount * 1_000_000));
+    return { days, amount: formatMinor(accrue(principal, vault.allocation.rate, days), 6) };
+  }, [vault.allocation, vault.amount, mountedAt]);
+
+  const runDisputeFromAnywhere = () => {
+    go("dispute");
+    void run();
+  };
+
   return (
-    <div className="shell">
-      <header className="masthead">
-        <div className="brand">
-          <h1>
-            <Link href="/">
-              <span className="mark">⚖</span> Judr
-            </Link>
-          </h1>
-          <span className="tagline">
-            Autonomous arbitration for tokenized RWA vaults
-          </span>
+    <div className="app-shell">
+      <aside className="app-side">
+        <div className="app-brand">
+          <Link href="/" className="wordmark-app">
+            <span className="mark">⚖</span> Judr
+          </Link>
+          <div className="app-tagline">Arbitration for escrowed RWAs</div>
         </div>
-        <div className="masthead-meta">
+
+        <nav className="app-nav" aria-label="App">
+          {PAGES.map((p) => (
+            <button
+              key={p.id}
+              className={`app-nav-item ${page === p.id ? "on" : ""}`}
+              onClick={() => go(p.id)}
+              aria-current={page === p.id ? "page" : undefined}
+            >
+              <span className="app-nav-icon" aria-hidden="true">{p.icon}</span>
+              <span>{p.label}</span>
+              {p.id === "dispute" && running && <span className="dot pulse app-nav-dot" />}
+              {p.id === "evidence" && quarantinedCount > 0 && (
+                <span className="app-nav-count alert">{quarantinedCount}</span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="app-side-card">
           {mode === "live" && (
-            <span className="badge live">
-              <span className="dot pulse" /> Live · SERV
-            </span>
+            <span className="badge live"><span className="dot pulse" /> Live · SERV</span>
           )}
           {mode === "recorded" && (
-            <span className="badge recorded">
-              <span className="dot" /> Recorded run
+            <span className="badge recorded"><span className="dot" /> Recorded run</span>
+          )}
+          {mode === null && (
+            <span className={`badge ${liveCapable ? "live" : "recorded"}`}>
+              {liveCapable ? "SERV key configured" : "No SERV key · replay"}
             </span>
           )}
-          {!liveCapable && mode === null && (
-            <span className="badge recorded">No SERV key · replay mode</span>
-          )}
+          <p>
+            {liveCapable
+              ? "Decisions run live against SERV. Each visitor has their own vault."
+              : "Without a key the demo replays a recorded decision, labelled as such."}
+          </p>
           <button className="btn small" onClick={reset} disabled={running || busy}>
             Reset demo
           </button>
         </div>
-      </header>
+      </aside>
 
-      <div className="columns">
-        <aside className="rail">
-          <VaultPanel vault={vault} dispute={activeDispute} result={result} />
-
-          <AllocationPanel vault={vault} onVault={setVault} disabled={running || busy} />
-
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Evidence</h2>
-              <span className="badge">{activeDispute.evidence.length} documents</span>
-            </div>
-            <div className="panel-body">
-              {activeDispute.evidence.map((doc) => (
-                <div
-                  key={doc.id}
-                  className={`evidence-item ${quarantined.has(doc.id) ? "quarantined" : ""}`}
-                >
-                  <span className="eid">{doc.id}</span>
-                  <span style={{ minWidth: 0 }}>
-                    <div className="fname">{doc.filename}</div>
-                    <div className="side">
-                      {doc.party === "plaintiff"
-                        ? activeDispute.plaintiff.name
-                        : activeDispute.defendant.name}
-                      {quarantined.has(doc.id) && " · quarantined"}
-                    </div>
-                  </span>
-                </div>
-              ))}
-            </div>
+      <main className="app-main">
+        <header className="app-head">
+          <div>
+            <h1>{PAGES.find((p) => p.id === page)?.title}</h1>
+            <p>{PAGES.find((p) => p.id === page)?.subtitle}</p>
           </div>
-        </aside>
-
-        <main className="stage">
-          <div className="panel">
-            <div className="panel-head">
-              <h2>Dispute</h2>
-              <span className="badge">{activeDispute.vaultId}</span>
+          {page !== "custom" && (
+            <div className="app-head-actions">
+              <button className="btn primary" onClick={runDisputeFromAnywhere} disabled={running}>
+                {running ? "Arbitrating…" : vault.status === "funded" ? "Run arbitration" : "New dispute · run again"}
+              </button>
             </div>
-            <div className="panel-body">
-              <p style={{ margin: "0 0 16px", color: "var(--text-dim)", maxWidth: "70ch" }}>
-                {activeDispute.claim}
-              </p>
-              <div className="controls">
-                <button className="btn primary" onClick={() => void run()} disabled={running}>
-                  {running
-                    ? "Arbitrating…"
-                    : vault.status === "funded"
-                      ? "Run arbitration"
-                      : "New dispute · run again"}
-                </button>
-                <label className="toggle">
-                  <input
-                    type="checkbox"
-                    checked={poisoned}
-                    onChange={(e) => setPoisoned(e.target.checked)}
-                    disabled={running}
-                  />
-                  Include tampered evidence
-                </label>
-                {poisoned && (
-                  <span className="badge alert">
-                    e7 contains an injected instruction
-                  </span>
-                )}
+          )}
+        </header>
+
+        {error && <div className="error-bar">{error}</div>}
+
+        {page === "overview" && (
+          <>
+            <div className="tiles">
+              <StatTile
+                label="Escrow"
+                value={`${vault.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+                unit={vault.asset}
+                caption={`${vault.id} · ${STATUS_LABEL[vault.status]}`}
+              />
+              <StatTile
+                label="Escrow yield"
+                value={vault.allocation ? `+${accrued?.amount ?? "0.00"}` : "—"}
+                unit={vault.allocation ? vault.asset : undefined}
+                caption={
+                  vault.allocation
+                    ? `${vault.allocation.symbol} · ${(vault.allocation.rate * 100).toFixed(2)}% TTM · ${accrued?.days ?? 0} days`
+                    : "held as cash"
+                }
+                tone={vault.allocation ? "ok" : undefined}
+              />
+              <StatTile
+                label="Verdict"
+                value={
+                  result
+                    ? result.verdict.winner === "plaintiff"
+                      ? activeDispute.plaintiff.name.split(" (")[0]
+                      : activeDispute.defendant.name.split(" (")[0]
+                    : "—"
+                }
+                caption={
+                  result
+                    ? `${(result.confidence.score * 100).toFixed(0)}% confidence · ${result.confidence.consensus.agreed}/${result.confidence.consensus.runs} stable`
+                    : running
+                      ? "arbitrating…"
+                      : "no decision yet"
+                }
+                tone={result ? "ok" : undefined}
+              />
+              <StatTile
+                label="Cost of decision"
+                value={result ? (result.cost.mode === "live" ? `$${result.cost.usd.toFixed(2)}` : "$0.00") : "—"}
+                caption={
+                  result
+                    ? result.cost.mode === "live"
+                      ? `${result.cost.seconds}s · ${(result.cost.promptTokens + result.cost.completionTokens).toLocaleString("en-US")} tokens`
+                      : "recorded run · no tokens"
+                    : "a human arbitrator: $3,000+ · weeks"
+                }
+              />
+            </div>
+
+            <div className="app-grid-2">
+              <VaultPanel vault={vault} dispute={activeDispute} result={result} />
+              <div className="panel">
+                <div className="panel-head"><h2>Walk-through</h2></div>
+                <div className="panel-body">
+                  <ol className="walk">
+                    <li>
+                      <strong>Run arbitration.</strong> Seven typed steps stream in on the Dispute page and end in a verdict with its price.
+                      <button className="link" onClick={runDisputeFromAnywhere} disabled={running}>Run →</button>
+                    </li>
+                    <li>
+                      <strong>Try tampered evidence.</strong> A document with a hidden instruction is caught and quarantined before anything reads it.
+                      <button className="link" onClick={() => { setPoisoned(true); go("dispute"); }} disabled={running}>Set it up →</button>
+                    </li>
+                    <li>
+                      <strong>Appeal, then review.</strong> An appeal freezes the escrow; a person upholds or overturns on the record.
+                    </li>
+                    <li>
+                      <strong>Bring your own case.</strong> Paste a contract and evidence and get a live decision.
+                      <button className="link" onClick={() => go("custom")}>Open →</button>
+                    </li>
+                  </ol>
+                </div>
               </div>
             </div>
-          </div>
+          </>
+        )}
 
-          <CustomDispute
-            onRun={(input) => void run(false, input)}
-            disabled={running || busy}
-            liveCapable={liveCapable}
-          />
-
-          {error && <div className="error-bar">{error}</div>}
-
-          {flags.length > 0 && (
+        {page === "dispute" && (
+          <>
             <div className="panel">
               <div className="panel-head">
-                <h2>Evidence screening</h2>
-                <span className="badge alert">{flags.length} flagged</span>
+                <h2>{activeDispute.contract.title}</h2>
+                <span className="badge">{activeDispute.vaultId}</span>
               </div>
               <div className="panel-body">
-                {flags.map((flag, i) => (
-                  <div key={`${flag.evidence_id}-${i}`} className="guard-flag">
-                    <div className="gf-head">
-                      <span className="gf-kind">{flag.kind.replace(/_/g, " ")}</span>
-                      <span className="badge alert">{flag.severity}</span>
-                      <span className="badge">{flag.evidence_id}</span>
-                      {flag.severity === "high" && (
-                        <span className="badge alert">excluded from adjudication</span>
-                      )}
+                <p style={{ margin: "0 0 16px", color: "var(--text-dim)", maxWidth: "76ch" }}>{activeDispute.claim}</p>
+                <div className="controls">
+                  <label className="toggle">
+                    <input type="checkbox" checked={poisoned} onChange={(e) => setPoisoned(e.target.checked)} disabled={running || !!customDisplay} />
+                    Include tampered evidence
+                  </label>
+                  {poisoned && !customDisplay && <span className="badge alert">e7 contains an injected instruction</span>}
+                  {customDisplay && <span className="badge">your own case</span>}
+                </div>
+              </div>
+            </div>
+
+            {flags.length > 0 && (
+              <div className="panel">
+                <div className="panel-head">
+                  <h2>Evidence screening</h2>
+                  <span className="badge alert">{flags.length} flagged</span>
+                </div>
+                <div className="panel-body">
+                  {flags.map((flag, i) => (
+                    <div key={`${flag.evidence_id}-${i}`} className="guard-flag">
+                      <div className="gf-head">
+                        <span className="gf-kind">{flag.kind.replace(/_/g, " ")}</span>
+                        <span className="badge alert">{flag.severity}</span>
+                        <span className="badge">{flag.evidence_id}</span>
+                        {flag.severity === "high" && <span className="badge alert">excluded from adjudication</span>}
+                      </div>
+                      <div className="gf-detail">{flag.detail}</div>
+                      <blockquote>{flag.excerpt}</blockquote>
                     </div>
-                    <div className="gf-detail">{flag.detail}</div>
-                    <blockquote>{flag.excerpt}</blockquote>
-                  </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Feed steps={steps} open={open} setOpen={setOpen} clauses={result?.clauses.clauses ?? []} />
+
+            {result && (
+              <>
+                <VerdictPanel result={result} vault={vault} busy={busy} onAppeal={() => vaultAction("appeal")} onRelease={() => vaultAction("release")} />
+                <ReviewPanel vault={vault} onVault={setVault} disabled={running || busy} />
+              </>
+            )}
+          </>
+        )}
+
+        {page === "evidence" && (
+          <>
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Documents</h2>
+                <span className="badge">{activeDispute.evidence.length} submitted{quarantinedCount ? ` · ${quarantinedCount} quarantined` : ""}</span>
+              </div>
+              <div className="panel-body docs">
+                {activeDispute.evidence.map((doc) => (
+                  <details key={doc.id} className={`doc ${quarantined.has(doc.id) ? "quarantined" : ""}`}>
+                    <summary>
+                      <span className="eid">{doc.id}</span>
+                      <span className="fname">{doc.filename}</span>
+                      <span className="side">
+                        {doc.party === "plaintiff" ? activeDispute.plaintiff.name : activeDispute.defendant.name}
+                        {quarantined.has(doc.id) && " · quarantined"}
+                      </span>
+                    </summary>
+                    <pre className="doc-text">{doc.text}</pre>
+                  </details>
                 ))}
               </div>
             </div>
-          )}
+            <div className="panel">
+              <div className="panel-head"><h2>Contract</h2><span className="badge">{activeDispute.contract.id}</span></div>
+              <div className="panel-body"><pre className="doc-text">{activeDispute.contract.text}</pre></div>
+            </div>
+            {flags.length > 0 && (
+              <div className="panel">
+                <div className="panel-head"><h2>Screening flags</h2><span className="badge alert">{flags.length}</span></div>
+                <div className="panel-body">
+                  {flags.map((flag, i) => (
+                    <div key={`${flag.evidence_id}-${i}`} className="guard-flag">
+                      <div className="gf-head">
+                        <span className="gf-kind">{flag.kind.replace(/_/g, " ")}</span>
+                        <span className="badge alert">{flag.severity}</span>
+                        <span className="badge">{flag.evidence_id}</span>
+                      </div>
+                      <div className="gf-detail">{flag.detail}</div>
+                      <blockquote>{flag.excerpt}</blockquote>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
-          <Feed
-            steps={steps}
-            open={open}
-            setOpen={setOpen}
-            clauses={result?.clauses.clauses ?? []}
-          />
+        {page === "escrow" && (
+          <div className="app-grid-2">
+            <div className="app-col">
+              <AllocationPanel vault={vault} onVault={setVault} disabled={running || busy} />
+              {vault.settlement && (
+                <div className="panel">
+                  <div className="panel-head"><h2>Settlement</h2><span className="badge ok">released</span></div>
+                  <div className="panel-body">
+                    <dl className="ledger">
+                      <dt>Principal</dt><dd>{vault.settlement.display.principal}</dd>
+                      <dt>Yield · {vault.settlement.days} days</dt><dd>+ {vault.settlement.display.yieldEarned}</dd>
+                      <dt>Judr fee · from yield only</dt><dd>− {vault.settlement.display.fee}</dd>
+                      <dt className="total">Paid to {vault.releasedTo?.name}</dt><dd className="total">{vault.settlement.display.payout} {vault.asset}</dd>
+                    </dl>
+                  </div>
+                </div>
+              )}
+            </div>
+            <IxsVaultsPanel />
+          </div>
+        )}
 
-          {result && (
+        {page === "audit" && (
+          result ? (
             <>
-              <VerdictPanel
-                result={result}
-                vault={vault}
-                busy={busy}
-                onAppeal={() => vaultAction("appeal")}
-                onRelease={() => vaultAction("release")}
-              />
-              <ReviewPanel vault={vault} onVault={setVault} disabled={running || busy} />
+              <div className="tiles">
+                <StatTile label="Steps recorded" value={String(result.trail.length)} caption="each with engine, schema result and input digest" />
+                <StatTile label="Schema repairs" value={String(result.trail.reduce((n, r) => n + r.repairs, 0))} caption="invalid output re-prompted with the validator's errors" />
+                <StatTile label="Tokens" value={(result.cost.promptTokens + result.cost.completionTokens).toLocaleString("en-US")} caption={result.cost.mode === "live" ? result.cost.model : "recorded run"} />
+                <StatTile label="Verified" value={result.verification.passed ? "yes" : "no"} caption={result.verification.passed ? "every cited clause and document resolves" : `${result.verification.issues.length} issue(s)`} tone={result.verification.passed ? "ok" : "bad"} />
+              </div>
               <AuditTrail result={result} />
             </>
-          )}
-        </main>
-      </div>
+          ) : (
+            <div className="panel"><div className="feed-empty">Run an arbitration to produce a trail. Every step is recorded with its engine, schema result and input digest.</div></div>
+          )
+        )}
+
+        {page === "custom" && (
+          <CustomDispute
+            embedded
+            onRun={(input) => { go("dispute"); void run(false, input); }}
+            disabled={running || busy}
+            liveCapable={liveCapable}
+          />
+        )}
+      </main>
     </div>
   );
 }
@@ -643,4 +819,88 @@ function displayBundle(input: CustomDisputeInput, vaultId: string): DisputeBundl
         text: d.text,
       })),
   };
+}
+
+/* ---------------------------------------------------------------- */
+/* Shell pieces                                                      */
+/* ---------------------------------------------------------------- */
+
+type Page = "overview" | "dispute" | "evidence" | "escrow" | "audit" | "custom";
+
+const PAGES: Array<{ id: Page; label: string; title: string; subtitle: string; icon: React.ReactNode }> = [
+  { id: "overview", label: "Overview", title: "Overview", subtitle: "The escrow, where it sits, and what has been decided.", icon: <Icon d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" /> },
+  { id: "dispute", label: "Dispute", title: "Dispute", subtitle: "The case, the reasoning as it streams, and the verdict.", icon: <Icon d="M12 3v18M7.5 21h9M4 7.5h16M4 7.5l-2.5 6a3 3 0 0 0 5 0zM20 7.5l2.5 6a3 3 0 0 1-5 0z" /> },
+  { id: "evidence", label: "Evidence", title: "Evidence", subtitle: "Every document, and what the screening found in it.", icon: <Icon d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6" /> },
+  { id: "escrow", label: "Escrow", title: "Escrow", subtitle: "Where the money sits while the dispute is open, and how it settles.", icon: <Icon d="M3 10h18M5 10V7l7-4 7 4v3M5 10v9h14v-9M10 14h4" /> },
+  { id: "audit", label: "Audit", title: "Audit trail", subtitle: "What ran, what it cost, and the digest the vault settles against.", icon: <Icon d="M4 5h16v14H4zM8 9h8M8 13h5M15 13l2 2 3-3" /> },
+  { id: "custom", label: "Your case", title: "Bring your own dispute", subtitle: "Paste a contract and evidence; Judr decides it live.", icon: <Icon d="M12 5v14M5 12h14" /> },
+];
+
+const STATUS_LABEL: Record<Vault["status"], string> = {
+  funded: "funded",
+  disputed: "disputed",
+  verdict_posted: "verdict posted",
+  released: "released",
+  appealed: "under appeal",
+};
+
+function Icon({ d }: { d: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d={d} />
+    </svg>
+  );
+}
+
+function StatTile({ label, value, unit, caption, tone }: { label: string; value: string; unit?: string; caption: string; tone?: "ok" | "bad" | "warn" }) {
+  return (
+    <div className="tile">
+      <div className="tile-k">{label}</div>
+      <div className={`tile-v ${tone ?? ""}`}>
+        {value}
+        {unit && <span className="tile-unit">{unit}</span>}
+      </div>
+      <div className="tile-n">{caption}</div>
+    </div>
+  );
+}
+
+/** The live IXS list, as the allocation agent sees it. */
+function IxsVaultsPanel() {
+  const [snap, setSnap] = useState<IxsSnapshot | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    fetch("/api/allocate")
+      .then((r) => r.json())
+      .then(setSnap)
+      .catch(() => setFailed(true));
+  }, []);
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <h2>IXS vaults</h2>
+        {snap && <span className={`badge ${snap.source === "live" ? "live" : "recorded"}`}>{snap.source === "live" ? "live read" : "recorded snapshot"}</span>}
+      </div>
+      <div className="panel-body" style={{ padding: 0 }}>
+        {!snap && !failed && <div className="feed-empty">Reading IXS…</div>}
+        {failed && <div className="feed-empty">IXS could not be read.</div>}
+        {snap && (
+          <table className="vt">
+            <thead><tr><th>Vault</th><th>Chain</th><th>Access</th><th>TTM</th><th>On-chain</th></tr></thead>
+            <tbody>
+              {snap.vaults.map((v) => (
+                <tr key={v.id}>
+                  <td>{v.name} <span className="mono dim">{v.symbol}</span></td>
+                  <td>{v.chainName}</td>
+                  <td><span className={`badge ${v.permissionless ? "ok" : ""}`}>{v.permissionless ? "permissionless" : "whitelist"}</span></td>
+                  <td className="mono">{(v.ttmRate * 100).toFixed(2)}%</td>
+                  <td className="mono dim">{v.onchain ? `${v.onchain.tvl.toLocaleString("en-US")} ${v.asset.symbol} · share ${v.onchain.sharePrice}` : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
 }

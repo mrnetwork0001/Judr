@@ -20,12 +20,15 @@ export default function CustomDispute({
   onRun,
   disabled,
   liveCapable,
+  embedded = false,
 }: {
   onRun: (input: CustomDisputeInput) => void;
   disabled: boolean;
   liveCapable: boolean;
+  /** Rendered as a page of its own: always open, no collapsible header. */
+  embedded?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(embedded);
   const [title, setTitle] = useState("");
   const [plaintiff, setPlaintiff] = useState("");
   const [defendant, setDefendant] = useState("");
@@ -44,10 +47,17 @@ export default function CustomDispute({
 
   return (
     <div className="panel">
-      <button className="panel-head panel-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-        <h2>Bring your own dispute</h2>
-        <span className="badge">{open ? "close" : liveCapable ? "live · paste a case" : "needs a live key"}</span>
-      </button>
+      {embedded ? (
+        <div className="panel-head">
+          <h2>Your case</h2>
+          <span className={`badge ${liveCapable ? "live" : ""}`}>{liveCapable ? "decided live on SERV" : "needs a live key"}</span>
+        </div>
+      ) : (
+        <button className="panel-head panel-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+          <h2>Bring your own dispute</h2>
+          <span className="badge">{open ? "close" : liveCapable ? "live · paste a case" : "needs a live key"}</span>
+        </button>
+      )}
 
       {open && (
         <div className="panel-body custom">
