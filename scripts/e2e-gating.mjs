@@ -1,8 +1,9 @@
 // End-to-end of wallet gating with real signatures: three throwaway keys play
 // Contractor, Client and Reviewer against a running app (SERV key required).
-//   node scripts/e2e-gating.mjs
+//   node scripts/e2e-gating.mjs            # against localhost:3000
+//   BASE=https://judr.example.com node scripts/e2e-gating.mjs
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
-const base = "http://localhost:3000";
+const base = process.env.BASE ?? "http://localhost:3000";
 let cookie = "";
 const call = async (body) => {
   const r = await fetch(`${base}/api/vault`, { method: "POST", headers: { "Content-Type": "application/json", cookie }, body: JSON.stringify(body) });

@@ -1,0 +1,14 @@
+# For a server that already runs a reverse proxy on 80/443 (Caddy, nginx…):
+# the app only, bound to localhost on PORT. Point the proxy at 127.0.0.1:PORT.
+#   PORT=3380 docker compose -f docker-compose.behind-proxy.yml up -d --build
+services:
+  judr:
+    build: .
+    container_name: judr
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:${PORT:-3380}:3000"
+    # Keep the app from crowding a shared box.
+    mem_limit: 768m
+    cpus: 1.0

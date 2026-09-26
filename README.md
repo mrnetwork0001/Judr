@@ -263,6 +263,14 @@ Caddy obtains the certificate and proxies to the app; the arbitration stream
 is passed through unbuffered. Point the domain's A record at the server first,
 or use `DOMAIN=:80` and the server's IP.
 
+On a server that already has a reverse proxy, run the app alone on localhost
+and add one site to the proxy:
+
+```bash
+PORT=3380 docker compose -f docker-compose.behind-proxy.yml up -d --build
+# Caddy:   judr.example.com { reverse_proxy 127.0.0.1:3380 { flush_interval -1 } }
+```
+
 **Not Vercel** — or any serverless host — without changes. Cases, payout caps
 and run caps live in the server's memory, and serverless routes requests
 across instances, so a verdict posted on one is invisible to the next.
