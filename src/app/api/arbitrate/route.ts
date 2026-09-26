@@ -10,10 +10,11 @@
  */
 
 import { runArbitration } from "@/lib/graph/run";
+import { allowCustomRun, toBundle, type CustomDisputeInput } from "@/lib/custom";
 import { demoDispute } from "@/lib/fixtures";
 import { hasServKey } from "@/lib/serv";
 import { sessionFor, withSession } from "@/lib/session";
-import { postVerdict, raiseDispute, VaultError } from "@/lib/vault";
+import { getVault, postVerdict, raiseDispute, VaultError } from "@/lib/vault";
 import type { ArbitrationEvent } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -22,14 +23,42 @@ export const maxDuration = 300;
 
 interface ArbitrateRequest {
   poisoned?: boolean;
+  /** A visitor's own dispute. Bounded in custom.ts; needs a live key. */
+  custom?: CustomDisputeInput;
 }
 
 export async function POST(request: Request) {
   const session = sessionFor(request);
   const body = (await request.json().catch(() => ({}))) as ArbitrateRequest;
-  const bundle = demoDispute({ poisoned: body.poisoned === true });
   // One condition, used for the label and for the run, so they cannot disagree.
   const replay = !hasServKey();
+
+  let bundle;
+  if (body.custom) {
+    if (replay) {
+      return withSession(
+        Response.json({ error: "Custom disputes need a live SERV key; the recorded run can only decide the demo case." }, { status: 409 }),
+        session,
+      );
+    }
+    const gate = allowCustomRun(session.id);
+    if (!gate.allowed) {
+      return withSession(
+        Response.json({ error: `Custom runs are limited to a few per hour. Try again in about ${gate.retryInMinutes} minutes.` }, { status: 429 }),
+        session,
+      );
+    }
+    let parsed;
+    try {
+      parsed = toBundle(body.custom, getVault(session.id).id);
+    } catch (error) {
+      return withSession(Response.json({ error: error instanceof Error ? error.message : String(error) }, { status: 400 }), session);
+    }
+    if (!parsed.ok) return withSession(Response.json({ error: parsed.error }, { status: 400 }), session);
+    bundle = parsed.bundle;
+  } else {
+    bundle = demoDispute({ poisoned: body.poisoned === true });
+  }
 
   try {
     raiseDispute(

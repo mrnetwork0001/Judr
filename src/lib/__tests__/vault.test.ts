@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 // The appeal window is read at module load, so it is set before the import.
 process.env.JUDR_APPEAL_WINDOW_MS = "60";
 const vault = await import("../vault");
-const { appeal, getVault, postVerdict, raiseDispute, release, resetVault, VaultError } = vault;
+const { appeal, getVault, postVerdict, raiseDispute, release, resetVault, review, VaultError } = vault;
 
 import type { ArbitrationResult } from "../types";
 
@@ -103,4 +103,35 @@ test("refused transitions are VaultErrors, so the API can 409 them", () => {
     assert.ok(error instanceof VaultError);
     assert.equal((error as Error).name, "VaultError");
   }
+});
+
+test("human review is the only way out of an appeal: uphold settles to the winner", async () => {
+  const sid = fresh();
+  raiseDispute(sid, "test");
+  postVerdict(sid, RESULT);
+  appeal(sid, "disputed");
+  assert.throws(() => review(sid, "uphold", "   "), VaultError, "a review needs a reason");
+  const v = review(sid, "uphold", "The finding stands.");
+  assert.equal(v.status, "released");
+  assert.equal(v.releasedTo?.name, v.plaintiff.name);
+  assert.equal(v.review?.decision, "uphold");
+  assert.ok(v.settlement, "settlement is computed on review");
+});
+
+test("overturning an appeal awards the other party", () => {
+  const sid = fresh();
+  raiseDispute(sid, "test");
+  postVerdict(sid, RESULT);
+  appeal(sid, "disputed");
+  const v = review(sid, "overturn", "The notice was in time.");
+  assert.equal(v.status, "released");
+  assert.equal(v.releasedTo?.name, v.defendant.name);
+  assert.equal(v.review?.payee.name, v.defendant.name);
+});
+
+test("review is refused on anything that is not appealed", () => {
+  const sid = fresh();
+  raiseDispute(sid, "test");
+  postVerdict(sid, RESULT);
+  assert.throws(() => review(sid, "uphold", "x"), VaultError);
 });

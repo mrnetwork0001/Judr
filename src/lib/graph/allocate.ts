@@ -130,6 +130,11 @@ Rules:
    be refused by policy.
  - ERC-7540 vaults settle subscriptions and redemptions asynchronously — the
    operator finalises on its own schedule. State that as a risk when relevant.
+ - Operationally: the redemption request is lodged the moment a verdict is
+   posted, and payout happens only after an appeal window (days, in
+   production). So a vault whose redemptions finalise within that window does
+   not delay payout. Weigh that against the yield; do not assume cash is the
+   only way to stay payout-ready.
  - Prefer the vault whose chain and access terms let the escrow be redeemed in
    time for settlement. Yield is secondary to being able to pay out.
  - The parties will read your rationale. Write it for them, not for a trader.

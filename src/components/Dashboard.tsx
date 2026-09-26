@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AllocationPanel from "./AllocationPanel";
+import CustomDispute from "./CustomDispute";
+import ReviewPanel from "./ReviewPanel";
 import VaultPanel from "./VaultPanel";
+import type { CustomDisputeInput } from "@/lib/custom";
 import VerdictPanel from "./VerdictPanel";
 import type {
   ArbitrationEvent,
@@ -50,7 +53,9 @@ export default function Dashboard({
   const [mode, setMode] = useState<"live" | "recorded" | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
-  const activeDispute = poisoned ? poisonedDispute : dispute;
+  // A visitor's own case, shown in the rail while it runs. Cleared on reset.
+  const [customDisplay, setCustomDisplay] = useState<DisputeBundle | null>(null);
+  const activeDispute = customDisplay ?? (poisoned ? poisonedDispute : dispute);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -119,9 +124,10 @@ export default function Dashboard({
     }
   }, []);
 
-  const run = useCallback(async (poisonedOverride?: boolean) => {
+  const run = useCallback(async (poisonedOverride?: boolean, custom?: CustomDisputeInput) => {
     const usePoisoned = poisonedOverride ?? poisoned;
     abortRef.current?.abort();
+    setCustomDisplay(custom ? displayBundle(custom, vault.id) : null);
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -142,12 +148,13 @@ export default function Dashboard({
       const response = await fetch("/api/arbitrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ poisoned: usePoisoned }),
+        body: JSON.stringify(custom ? { custom } : { poisoned: usePoisoned }),
         signal: controller.signal,
       });
 
       if (!response.ok || !response.body) {
-        throw new Error(`Arbitration request failed (${response.status})`);
+        const detail = await response.json().catch(() => null);
+        throw new Error(detail?.error ?? `Arbitration request failed (${response.status})`);
       }
 
       const reader = response.body.getReader();
@@ -183,7 +190,7 @@ export default function Dashboard({
     } finally {
       setRunning(false);
     }
-  }, [handleEvent, poisoned]);
+  }, [handleEvent, poisoned, vault.id]);
 
   // ?autorun=1 starts the run on load, ?poisoned=1 preloads the tampered
   // bundle. Both exist so a demo recording can be captured hands-free.
@@ -237,6 +244,7 @@ export default function Dashboard({
     setResult(null);
     setError(null);
     setMode(null);
+    setCustomDisplay(null);
     await vaultAction("reset");
   }, [vaultAction]);
 
@@ -347,6 +355,12 @@ export default function Dashboard({
             </div>
           </div>
 
+          <CustomDispute
+            onRun={(input) => void run(false, input)}
+            disabled={running || busy}
+            liveCapable={liveCapable}
+          />
+
           {error && <div className="error-bar">{error}</div>}
 
           {flags.length > 0 && (
@@ -390,6 +404,7 @@ export default function Dashboard({
                 onAppeal={() => vaultAction("appeal")}
                 onRelease={() => vaultAction("release")}
               />
+              <ReviewPanel vault={vault} onVault={setVault} disabled={running || busy} />
               <AuditTrail result={result} />
             </>
           )}
@@ -608,4 +623,24 @@ function AuditTrail({ result }: { result: ArbitrationResult }) {
       </div>
     </div>
   );
+}
+
+/** What the rail shows for a visitor's own case; ids mirror the server's. */
+function displayBundle(input: CustomDisputeInput, vaultId: string): DisputeBundle {
+  let n = 0;
+  return {
+    vaultId,
+    contract: { id: "custom", title: input.title?.trim() || "Custom dispute", text: input.contract },
+    claim: input.claim.trim(),
+    plaintiff: { name: input.plaintiff.trim() || "Plaintiff", address: "0xPLAINTIFF" },
+    defendant: { name: input.defendant.trim() || "Defendant", address: "0xDEFENDANT" },
+    evidence: input.evidence
+      .filter((d) => d.text.trim().length >= 10)
+      .map((d) => ({
+        id: `e${++n}`,
+        party: d.party,
+        filename: d.filename?.trim() || `document-${n}.txt`,
+        text: d.text,
+      })),
+  };
 }

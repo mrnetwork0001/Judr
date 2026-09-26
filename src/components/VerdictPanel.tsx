@@ -57,7 +57,9 @@ export default function VerdictPanel({
           <div className="n">
             {confidence.consensus.failed > 0
               ? `independent runs agreed · ${confidence.consensus.failed} failed to run`
-              : "independent runs agreed"}
+              : confidence.consensus.winners
+                ? confidence.consensus.winners.join(" · ")
+                : "independent runs agreed"}
           </div>
         </div>
         <div className="conf-cell">
@@ -76,6 +78,33 @@ export default function VerdictPanel({
               : `${verification.issues.length} issue(s)`}
           </div>
         </div>
+      </div>
+
+      <div className="cost-strip">
+        {result.cost.mode === "live" ? (
+          <>
+            <div className="cost-main">
+              <span className="cost-k">This decision</span>
+              <span className="cost-v">${result.cost.usd.toFixed(2)}</span>
+              <span className="cost-sep">·</span>
+              <span className="cost-v">{result.cost.seconds}s</span>
+              <span className="cost-n">
+                {(result.cost.promptTokens + result.cost.completionTokens).toLocaleString("en-US")} tokens · {result.cost.model}
+              </span>
+            </div>
+            <div className="cost-vs">
+              <span className="cost-k">A human arbitrator</span>
+              <span className="cost-v dim">$3,000+</span>
+              <span className="cost-sep">·</span>
+              <span className="cost-v dim">6–12 weeks</span>
+            </div>
+          </>
+        ) : (
+          <div className="cost-main">
+            <span className="cost-k">Recorded run</span>
+            <span className="cost-n">no tokens spent · a live decision costs about $0.05 and under a minute</span>
+          </div>
+        )}
       </div>
 
       {!verification.passed && (

@@ -240,7 +240,7 @@ export async function loadReplay(args: ReplayArgs): Promise<ArbitrationResult> {
   const consensusStart = Date.now();
   emit({ type: "step_started", step: "consensus", label: consensusLabel, at: consensusStart });
   await pause(900, signal);
-  const consensus = { runs: 3, agreed: 3, failed: 0 };
+  const consensus = { runs: 3, agreed: 3, failed: 0, winners: ["plaintiff", "plaintiff", "plaintiff"] };
   trail.push(
     record("consensus", consensusLabel, consensusStart, REPLAY_MODEL, {
       ...consensus,
@@ -272,6 +272,14 @@ export async function loadReplay(args: ReplayArgs): Promise<ArbitrationResult> {
     startedAt: args.startedAt,
     endedAt: Date.now(),
     digest: verdictDigest(bundle, VERDICT),
+    cost: {
+      mode: "recorded",
+      model: REPLAY_MODEL,
+      promptTokens: 0,
+      completionTokens: 0,
+      usd: 0,
+      seconds: Number(((Date.now() - args.startedAt) / 1000).toFixed(1)),
+    },
   };
 }
 

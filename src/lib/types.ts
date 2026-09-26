@@ -151,7 +151,7 @@ export interface Confidence {
    * errored is counted in `runs` and `failed` but never in `agreed`: an
    * unmeasured re-run is not evidence of stability.
    */
-  consensus: { runs: number; agreed: number; failed: number };
+  consensus: { runs: number; agreed: number; failed: number; winners?: string[] };
   /** Share of decisive clauses with a non-indeterminate finding. */
   clause_support: number;
   verified: boolean;
@@ -172,6 +172,18 @@ export interface ArbitrationResult {
   endedAt: number;
   /** sha256 over the canonical verdict payload — what the vault signs on. */
   digest: string;
+  /** What this decision cost, from the provider's reported usage. */
+  cost: DecisionCost;
+}
+
+export interface DecisionCost {
+  mode: "live" | "recorded";
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  /** USD at the model's published per-million rates. */
+  usd: number;
+  seconds: number;
 }
 
 /* ---------------------------------------------------------------- */

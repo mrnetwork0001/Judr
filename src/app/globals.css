@@ -1163,3 +1163,211 @@ button:disabled {
   color: var(--text);
   font-weight: 600;
 }
+
+/* ---------------------------------------------------------------- */
+/* Cost of the decision                                              */
+/* ---------------------------------------------------------------- */
+
+.cost-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.cost-main,
+.cost-vs {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cost-k {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-right: 4px;
+}
+
+.cost-v {
+  font-family: var(--mono);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ok);
+}
+
+.cost-v.dim {
+  color: var(--text-dim);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--bad) 55%, transparent);
+  text-decoration-thickness: 1.5px;
+}
+
+.cost-sep {
+  color: var(--text-faint);
+}
+
+.cost-n {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* ---------------------------------------------------------------- */
+/* Human review                                                      */
+/* ---------------------------------------------------------------- */
+
+.review-panel {
+  border-color: color-mix(in srgb, var(--bad) 30%, rgba(255, 255, 255, 0.55));
+}
+
+.review-lead {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.review-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.7);
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  resize: vertical;
+}
+
+.review-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.review-note {
+  margin: 0;
+  font-family: var(--display), Georgia, serif;
+  font-size: 18px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.review-meta {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------- */
+/* Bring your own dispute                                            */
+/* ---------------------------------------------------------------- */
+
+.panel-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.panel-toggle:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.custom label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.custom label > span {
+  display: block;
+  margin-bottom: 5px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.custom input,
+.custom textarea,
+.custom select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.7);
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.custom textarea {
+  resize: vertical;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.custom input:focus,
+.custom textarea:focus,
+.custom select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.custom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.custom-block {
+  margin-bottom: 12px;
+}
+
+.custom-docs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-doc {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.custom-doc-head {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.custom-doc-head .custom-doc-name {
+  flex: 1;
+  min-width: 140px;
+}
+
+.custom-doc-head select {
+  width: auto;
+}
+
+.custom-note {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}

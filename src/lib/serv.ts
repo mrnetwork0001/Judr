@@ -64,6 +64,17 @@ export class ServError extends Error {
   }
 }
 
+/**
+ * Published per-million-token rates for the default model, so a decision can
+ * carry its own price tag. Another model's usage is priced at these rates and
+ * labelled as an estimate.
+ */
+export const PRICING = { model: DEFAULT_MODEL, inputPerM: 1.0, outputPerM: 6.0 };
+
+export function estimateUsd(promptTokens: number, completionTokens: number): number {
+  return Number(((promptTokens * PRICING.inputPerM + completionTokens * PRICING.outputPerM) / 1_000_000).toFixed(4));
+}
+
 export function servConfig() {
   return {
     apiKey: process.env.SERV_API_KEY,

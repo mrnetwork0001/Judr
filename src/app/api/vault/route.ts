@@ -8,7 +8,7 @@
 
 import { buildRedeem, ESCROW_AGENT, findVault, ixsVaults } from "@/lib/ixs";
 import { sessionFor, withSession } from "@/lib/session";
-import { appeal, getVault, release, resetVault, VaultError } from "@/lib/vault";
+import { appeal, getVault, release, resetVault, review, VaultError } from "@/lib/vault";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,8 +21,21 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = sessionFor(request);
   const body = (await request.json().catch(() => ({}))) as {
-    action?: "reset" | "appeal" | "release";
+    action?: "reset" | "appeal" | "release" | "review";
     reason?: string;
+    decision?: "uphold" | "overturn";
+    note?: string;
+  };
+
+  /** The redemption request for wherever the escrow sits. Unsigned. */
+  const redeemFor = async () => {
+    const current = getVault(session.id);
+    if (!current.allocation) return undefined;
+    const snapshot = await ixsVaults();
+    const v = findVault(snapshot, current.allocation.vaultId);
+    if (!v) return undefined;
+    const price = current.allocation.sharePrice ?? v.onchain?.sharePrice ?? 1;
+    return buildRedeem(v, ESCROW_AGENT, (current.amount / price).toFixed(6));
   };
 
   try {
@@ -34,21 +47,16 @@ export async function POST(request: Request) {
           Response.json(appeal(session.id, body.reason ?? "Appeal lodged by the losing party")),
           session,
         );
-      case "release": {
-        // The redemption request for wherever the escrow sits. Unsigned; the
-        // shares figure is principal at the share price recorded at allocation.
-        const current = getVault(session.id);
-        let redeemTx;
-        if (current.allocation) {
-          const snapshot = await ixsVaults();
-          const v = findVault(snapshot, current.allocation.vaultId);
-          if (v) {
-            const price = current.allocation.sharePrice ?? v.onchain?.sharePrice ?? 1;
-            const shares = (current.amount / price).toFixed(6);
-            redeemTx = buildRedeem(v, ESCROW_AGENT, shares);
-          }
+      case "release":
+        return withSession(Response.json(release(session.id, await redeemFor())), session);
+      case "review": {
+        if (body.decision !== "uphold" && body.decision !== "overturn") {
+          return withSession(Response.json({ error: "decision must be uphold or overturn." }, { status: 400 }), session);
         }
-        return withSession(Response.json(release(session.id, redeemTx)), session);
+        return withSession(
+          Response.json(review(session.id, body.decision, String(body.note ?? "").slice(0, 600), await redeemFor())),
+          session,
+        );
       }
       default:
         return withSession(Response.json({ error: "Unknown action." }, { status: 400 }), session);

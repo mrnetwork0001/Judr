@@ -21,7 +21,12 @@ export default function VaultPanel({
   result: ArbitrationResult | null;
 }) {
   const status = STATUS_COPY[vault.status];
-  const winner = result?.verdict.winner;
+  // Who the escrow went (or is going) to: a review can overturn the verdict.
+  const winner = vault.releasedTo
+    ? vault.releasedTo.address === vault.plaintiff.address
+      ? "plaintiff"
+      : "defendant"
+    : result?.verdict.winner;
 
   return (
     <div className="panel">

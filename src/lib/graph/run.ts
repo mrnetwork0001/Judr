@@ -7,7 +7,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { hasServKey, servConfig } from "../serv";
+import { estimateUsd, hasServKey, servConfig } from "../serv";
 import { screenEvidence } from "../guard";
 import { adjudicate, classifyClaim, evaluateEvidence, extractClauses } from "./steps";
 import { loadReplay } from "../replay";
@@ -200,6 +200,9 @@ export async function runArbitration(opts: RunOptions): Promise<ArbitrationResul
 
   const confidence = deriveConfidence(verdict, evaluation, verification, consensus);
 
+  const endedAt = Date.now();
+  const promptTokens = trail.reduce((n, r) => n + (r.usage?.prompt ?? 0), 0);
+  const completionTokens = trail.reduce((n, r) => n + (r.usage?.completion ?? 0), 0);
   const result: ArbitrationResult = {
     disputeId,
     vaultId: bundle.vaultId,
@@ -212,8 +215,16 @@ export async function runArbitration(opts: RunOptions): Promise<ArbitrationResul
     verification,
     trail,
     startedAt,
-    endedAt: Date.now(),
+    endedAt,
     digest: verdictDigest(bundle, verdict),
+    cost: {
+      mode: "live",
+      model: servConfig().model,
+      promptTokens,
+      completionTokens,
+      usd: estimateUsd(promptTokens, completionTokens),
+      seconds: Number(((endedAt - startedAt) / 1000).toFixed(1)),
+    },
   };
 
   emit({ type: "run_done", result });
@@ -233,9 +244,9 @@ async function measureConsensus(args: {
   trail: StepRecord[];
   emit: Emit;
   signal?: AbortSignal;
-}): Promise<{ runs: number; agreed: number; failed: number }> {
+}): Promise<{ runs: number; agreed: number; failed: number; winners: string[] }> {
   const extra = Math.max(0, CONSENSUS_RUNS - 1);
-  if (extra === 0) return { runs: 1, agreed: 1, failed: 0 };
+  if (extra === 0) return { runs: 1, agreed: 1, failed: 0, winners: [args.verdict.winner] };
 
   const start = Date.now();
   args.emit({
@@ -254,9 +265,18 @@ async function measureConsensus(args: {
     ),
   );
 
-  const tally = tallyConsensus(
-    results.map((r) => (r.status === "fulfilled" ? r.value.value.winner : null)),
-    args.verdict.winner,
+  const rerunWinners = results.map((r) => (r.status === "fulfilled" ? r.value.value.winner : null));
+  const tally = {
+    ...tallyConsensus(rerunWinners, args.verdict.winner),
+    winners: [args.verdict.winner, ...rerunWinners.map((w) => w ?? "failed")],
+  };
+  // The extra runs also carry usage; fold it into the record so the cost is complete.
+  const usage = results.reduce(
+    (acc, r) => {
+      if (r.status !== "fulfilled" || !r.value.usage) return acc;
+      return { prompt: acc.prompt + r.value.usage.prompt, completion: acc.completion + r.value.usage.completion, total: acc.total + r.value.usage.total };
+    },
+    { prompt: 0, completion: 0, total: 0 },
   );
   const failures = results.flatMap((r) =>
     r.status === "rejected" ? [r.reason instanceof Error ? r.reason.message : String(r.reason)] : [],
@@ -268,6 +288,7 @@ async function measureConsensus(args: {
     startedAt: start,
     endedAt: Date.now(),
     model: servConfig().model,
+    ...(usage.total > 0 ? { usage } : {}),
     input_digest: digest(args.evaluation),
     output: { ...tally, winner: args.verdict.winner },
     validated: tally.failed === 0,
@@ -370,7 +391,7 @@ export function deriveConfidence(
   verdict: Verdict,
   evaluation: Evaluation,
   verification: Verification,
-  consensus: { runs: number; agreed: number; failed: number },
+  consensus: { runs: number; agreed: number; failed: number; winners?: string[] },
 ): Confidence {
   const findings = new Map(evaluation.findings.map((f) => [f.clause_id, f]));
   const decisive = verdict.decisive_clauses;

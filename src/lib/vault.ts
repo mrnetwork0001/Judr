@@ -72,6 +72,16 @@ export interface Vault {
   allocation?: Allocation;
   /** Set on release: how principal, yield and fee were divided. */
   settlement?: Settlement;
+  /** The human decision that closed an appeal. */
+  review?: Review;
+}
+
+export interface Review {
+  decision: "uphold" | "overturn";
+  note: string;
+  at: number;
+  /** Who the escrow went to after review. */
+  payee: PartyRef;
 }
 
 export interface Allocation {
@@ -344,6 +354,45 @@ export function appeal(sessionId: string, reason: string): Vault {
     at: Date.now(),
     label: "Appeal lodged",
     detail: `${reason} — release halted, escalated to human review`,
+  });
+  return vault;
+}
+
+/**
+ * Human review closes an appeal. This is the only path out of "appealed", and
+ * it is not Judr's: a person upholds the verdict or overturns it, with a note
+ * that goes on the record, and the escrow settles to whoever they decide.
+ * Yield and fee are split the same way either way.
+ */
+export function review(
+  sessionId: string,
+  decision: "uphold" | "overturn",
+  note: string,
+  redeemTx?: UnsignedTx,
+): Vault {
+  const vault = getVault(sessionId);
+  if (vault.status !== "appealed" || !vault.verdict) {
+    throw new VaultError("Only an appealed verdict can be reviewed.");
+  }
+  if (!note.trim()) {
+    throw new VaultError("A review needs a written reason.");
+  }
+  const upheld = decision === "uphold";
+  const payee = upheld
+    ? vault.verdict.payee
+    : vault.verdict.winner === "plaintiff"
+      ? vault.defendant
+      : vault.plaintiff;
+  const now = Date.now();
+  vault.review = { decision, note: note.trim(), at: now, payee };
+  vault.status = "released";
+  vault.releasedTo = payee;
+  vault.settlement = computeSettlement(vault, now, redeemTx);
+  const s = vault.settlement.display;
+  vault.events.push({
+    at: now,
+    label: upheld ? "Human review: verdict upheld" : "Human review: verdict overturned",
+    detail: `${vault.review.note} — ${s.payout} ${vault.asset} → ${payee.name} (${payee.address})`,
   });
   return vault;
 }
