@@ -116,6 +116,8 @@ appeal, as the Reviewer to decide, as the Contractor to be paid.
 A public demo that pays whoever wins is a faucet unless bounded. Payouts are
 capped per address per day and by a daily outflow ceiling, and can be switched
 off; on mainnet the defaults are one payout per address and 5 USDC a day.
+Arbitrations spend SERV credit, so runs are capped too: six per session an
+hour, 150 a day.
 
 The first two settlements, on Base Sepolia, 26 September 2026 — one by a
 reviewer's decision, one by the appeal window closing:

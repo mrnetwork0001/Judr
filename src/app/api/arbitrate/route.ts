@@ -10,7 +10,7 @@
  */
 
 import { runArbitration } from "@/lib/graph/run";
-import { allowCustomRun, toBundle, type CustomDisputeInput } from "@/lib/custom";
+import { allowCustomRun, allowRun, toBundle, type CustomDisputeInput } from "@/lib/custom";
 import { demoDispute } from "@/lib/fixtures";
 import { hasServKey } from "@/lib/serv";
 import { sessionFor, withSession } from "@/lib/session";
@@ -36,6 +36,9 @@ export async function POST(request: Request) {
       session,
     );
   }
+
+  const gate = allowRun(session.id);
+  if (!gate.allowed) return withSession(Response.json({ error: gate.reason }, { status: 429 }), session);
 
   let bundle;
   if (body.custom) {

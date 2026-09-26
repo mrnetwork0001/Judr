@@ -82,8 +82,30 @@ export function toBundle(input: CustomDisputeInput, vaultId: string): CustomResu
 }
 
 /* ---------------------------------------------------------------- */
-/* Rate limit — per session, in memory, sliding hour                  */
+/* Rate limits — in memory, sliding windows                          */
+/*                                                                   */
+/* Every arbitration spends the owner's SERV credit, so runs are     */
+/* capped per session per hour and across all sessions per day, in   */
+/* addition to the tighter cap on custom cases.                       */
 /* ---------------------------------------------------------------- */
+
+export const RUN_CAPS = {
+  perSessionPerHour: Number(process.env.JUDR_RUNS_PER_SESSION_PER_HOUR ?? "6"),
+  perDay: Number(process.env.JUDR_RUNS_PER_DAY ?? "150"),
+};
+
+const runs = globalThis as unknown as { __judrRuns?: Array<{ session: string; at: number }> };
+
+export function allowRun(sessionId: string, now = Date.now()): { allowed: boolean; reason?: string } {
+  if (!runs.__judrRuns) runs.__judrRuns = [];
+  runs.__judrRuns = runs.__judrRuns.filter((r) => now - r.at < 86_400_000);
+  const today = runs.__judrRuns.length;
+  if (today >= RUN_CAPS.perDay) return { allowed: false, reason: `Judr has decided ${today} cases today, its daily ceiling. Try again tomorrow.` };
+  const mine = runs.__judrRuns.filter((r) => r.session === sessionId && now - r.at < 3_600_000).length;
+  if (mine >= RUN_CAPS.perSessionPerHour) return { allowed: false, reason: `This session has run ${mine} arbitrations in the last hour, its ceiling. Try again later.` };
+  runs.__judrRuns.push({ session: sessionId, at: now });
+  return { allowed: true };
+}
 
 const store = globalThis as unknown as { __judrCustomRuns?: Map<string, number[]> };
 
