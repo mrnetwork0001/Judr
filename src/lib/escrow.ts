@@ -100,7 +100,13 @@ async function agent() {
       // the process starts and no throwaway account is created on the way.
       const cdp = new CdpClient();
       const account = await cdp.evm.getOrCreateAccount({ name: AGENT_NAME });
-      const provider = await CdpEvmWalletProvider.configureWithWallet({ networkId: NETWORK, address: account.address });
+      // AgentKit names the mainnet "base-mainnet" where the CDP SDK says "base";
+      // the RPC is pinned so the provider never falls back to an empty transport.
+      const provider = await CdpEvmWalletProvider.configureWithWallet({
+        networkId: IS_MAINNET ? "base-mainnet" : "base-sepolia",
+        rpcUrl: CHAIN.rpc,
+        address: account.address,
+      });
       const kit = await AgentKit.from({
         walletProvider: provider,
         actionProviders: [walletActionProvider(), erc20ActionProvider(), cdpApiActionProvider()],
