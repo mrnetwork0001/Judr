@@ -30,4 +30,20 @@ r = await call({ action: "appeal" }); console.log("appeal by nobody:", r.status,
 r = await call({ action: "appeal", by: client.address }); console.log("appeal by client:", r.status, r.data.status);
 r = await call({ action: "review", decision: "uphold", note: "Stands.", by: client.address }); console.log("review by client:", r.status, r.data.error);
 r = await join("reviewer", reviewer); console.log("join reviewer:", r.status, r.data.participants?.length, "participants");
-r = await call({ action: "review", decision: "uphold", note: "Stands.", by: reviewer.address }); console.log("review by reviewer:", r.status, r.data.error ?? r.data.status, "(a 503 'not configured' here is correct until CDP keys exist)");
+r = await call({ action: "review", decision: "uphold", note: "Stands.", by: reviewer.address });
+console.log("review by reviewer:", r.status, r.data.error ?? `${r.data.status} · ${r.data.settlement?.display?.payout} USDC → ${r.data.releasedTo?.address} · ${r.data.settlement?.payoutUrl}`);
+
+// Scenario 2: no appeal — the window closes and the agent pays the winner.
+console.log("--- scenario 2: release after the appeal window ---");
+cookie = "";
+const winner = privateKeyToAccount(generatePrivateKey());
+r = await call({ action: "reset" }); console.log("reset:", r.status, "| escrow", r.data.amount, "USDC");
+r = await join("plaintiff", winner); console.log("join contractor:", r.status);
+const sse2 = await fetch(`${base}/api/arbitrate`, { method: "POST", headers: { "Content-Type": "application/json", cookie }, body: "{}" });
+console.log("arbitrate:", sse2.status, (await sse2.text()).includes('"run_done"') ? "verdict posted ✓" : "no verdict");
+r = await call({ action: "release" }); console.log("release inside window:", r.status, r.data.error);
+const v = await (await fetch(`${base}/api/vault`, { headers: { cookie } })).json();
+const waitMs = Math.max(0, (v.verdict?.appealDeadline ?? 0) - Date.now()) + 1500;
+console.log(`waiting ${(waitMs / 1000).toFixed(0)}s for the window…`); await new Promise((res) => setTimeout(res, waitMs));
+r = await call({ action: "release" });
+console.log("release:", r.status, r.data.error ?? `${r.data.status} · ${r.data.settlement?.display?.payout} USDC → ${r.data.releasedTo?.address} · ${r.data.settlement?.payoutUrl}`);

@@ -117,6 +117,17 @@ A public demo that pays whoever wins is a faucet unless bounded. Payouts are
 capped per address per day and by a daily outflow ceiling, and can be switched
 off; on mainnet the defaults are one payout per address and 5 USDC a day.
 
+The first two settlements, on Base Sepolia, 26 September 2026 — one by a
+reviewer's decision, one by the appeal window closing:
+
+- [`0x2b74cd11…`](https://sepolia.basescan.org/tx/0x2b74cd1172d1da7556785be6399afd72f94ac7690789779ae012db6448da6bba) — 0.10 USDC to the winning party after human review
+- [`0xca9697d8…`](https://sepolia.basescan.org/tx/0xca9697d83ebd6a472ea35d7846d79834d52821e4007565b529a25424a8613c1e) — 0.10 USDC to the winning party after the window closed unchallenged
+
+The agent is [`0x2469e706…5D58`](https://sepolia.basescan.org/address/0x2469e706537Eb28A12437e57F00dc823CC295D58).
+`node scripts/e2e-gating.mjs` reproduces both against a running app with
+three throwaway keys; `scripts/agent-transfers.mjs` lists the agent's transfers
+from the chain's logs.
+
 ## Escrow that earns — the IXS integration and the business model
 
 Idle escrow is dead capital. While a dispute is open, Judr's treasury agent

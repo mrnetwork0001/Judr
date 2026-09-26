@@ -12,6 +12,7 @@
  */
 
 import { AgentKit, CdpEvmWalletProvider, cdpApiActionProvider, erc20ActionProvider, walletActionProvider } from "@coinbase/agentkit";
+import { CdpClient } from "@coinbase/cdp-sdk";
 import { encodeFunctionData, erc20Abi, formatUnits, parseUnits, type Address, type Hex } from "viem";
 import { CHAINS, type ChainInfo } from "./identity";
 
@@ -95,9 +96,10 @@ async function agent() {
   if (!escrowConfigured()) throw new Error("Escrow agent is not configured (CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET).");
   if (!store.__judrAgent) {
     store.__judrAgent = (async () => {
-      const bootstrap = await CdpEvmWalletProvider.configureWithWallet({ networkId: NETWORK });
-      // A named account so the address is the same every time the process starts.
-      const account = await bootstrap.getClient().evm.getOrCreateAccount({ name: AGENT_NAME });
+      // Resolve the named account first, so the address is the same every time
+      // the process starts and no throwaway account is created on the way.
+      const cdp = new CdpClient();
+      const account = await cdp.evm.getOrCreateAccount({ name: AGENT_NAME });
       const provider = await CdpEvmWalletProvider.configureWithWallet({ networkId: NETWORK, address: account.address });
       const kit = await AgentKit.from({
         walletProvider: provider,
@@ -166,14 +168,12 @@ export async function ensureFunded(amountUsdc: number): Promise<Funding> {
     if (usdc < need) {
       const { transactionHash } = await client.evm.requestFaucet({ address, network: "base-sepolia", token: "usdc" });
       faucet.push({ token: "usdc", txHash: transactionHash, explorerUrl: `${CHAIN.explorer}/tx/${transactionHash}` });
-      await provider.waitForTransactionReceipt(transactionHash);
-      usdc = await usdcBalance(provider);
+      usdc = await settled(provider, transactionHash, () => usdcBalance(provider), usdc);
     }
-    if (eth < parseUnits("0.0005", 18)) {
+    if (eth < parseUnits("0.0001", 18)) {
       const { transactionHash } = await client.evm.requestFaucet({ address, network: "base-sepolia", token: "eth" });
       faucet.push({ token: "eth", txHash: transactionHash, explorerUrl: `${CHAIN.explorer}/tx/${transactionHash}` });
-      await provider.waitForTransactionReceipt(transactionHash);
-      eth = await provider.getBalance();
+      eth = await settled(provider, transactionHash, () => provider.getBalance(), eth);
     }
   }
   if (usdc < need) {
@@ -182,10 +182,30 @@ export async function ensureFunded(amountUsdc: number): Promise<Funding> {
         (IS_MAINNET ? " Fund it before opening cases." : " The faucet did not cover it."),
     );
   }
-  if (eth < parseUnits("0.0002", 18)) {
+  if (eth < parseUnits("0.00002", 18)) {
     throw new Error(`Escrow agent ${address} has ${formatUnits(eth, 18)} ETH on ${CHAIN.name}; it cannot pay gas.`);
   }
   return { address, usdc: formatUnits(usdc, USDC_DECIMALS), eth: formatUnits(eth, 18), faucet };
+}
+
+/**
+ * Public RPCs sit behind load balancers whose nodes disagree by a block or
+ * two. Wait for the receipt, then poll the balance until it reflects the
+ * transfer rather than trusting the first read after the receipt.
+ */
+async function settled(
+  provider: CdpEvmWalletProvider,
+  txHash: Hex,
+  read: () => Promise<bigint>,
+  before: bigint,
+): Promise<bigint> {
+  await provider.getPublicClient().waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
+  let value = await read();
+  for (let i = 0; i < 20 && value <= before; i++) {
+    await new Promise((r) => setTimeout(r, 1500));
+    value = await read();
+  }
+  return value;
 }
 
 /** The payout: a real ERC-20 transfer from the agent to the winner. */
@@ -202,7 +222,7 @@ export async function payout(to: Address, amountUsdc: number): Promise<Payout> {
     to: USDC,
     data: encodeFunctionData({ abi: erc20Abi, functionName: "transfer", args: [to, amount] }),
   });
-  await provider.waitForTransactionReceipt(txHash);
+  await provider.getPublicClient().waitForTransactionReceipt({ hash: txHash, timeout: 120_000 });
   recentPayouts().push({ to, amount: amountUsdc, at: Date.now() });
   return { txHash, explorerUrl: `${CHAIN.explorer}/tx/${txHash}`, to, amount: String(amountUsdc) };
 }

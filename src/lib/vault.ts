@@ -155,7 +155,7 @@ export const FEE_FLOOR_MINOR = 20_000_000n;
 const ASSET_DECIMALS = 6;
 
 /** The escrow per case. Small, because it is real testnet USDC from a faucet. */
-export const ESCROW_AMOUNT = Number(process.env.JUDR_ESCROW_USDC ?? "1");
+export const ESCROW_AMOUNT = Number(process.env.JUDR_ESCROW_USDC ?? "0.1");
 
 /**
  * Demo appeal window. Long enough to read the verdict and lodge an appeal,
