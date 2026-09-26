@@ -275,6 +275,16 @@ PORT=3380 docker compose -f docker-compose.behind-proxy.yml up -d --build
 and run caps live in the server's memory, and serverless routes requests
 across instances, so a verdict posted on one is invisible to the next.
 
+### A vercel.app address in front of the VPS
+
+The app keeps each case in memory on one server, so it should not be split
+across serverless instances. To get a `*.vercel.app` URL, deploy the
+[deploy/vercel-proxy](deploy/vercel-proxy) folder as its own Vercel project
+(framework preset "Other", no build command, no environment variables): it
+holds a single `vercel.json` that forwards every path to the VPS, cookies
+and the arbitration stream included. Point the destination at your own
+host if it is not the one above.
+
 ## Layout
 
 | Path | |
