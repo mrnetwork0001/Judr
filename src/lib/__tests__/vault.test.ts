@@ -1,7 +1,7 @@
 /**
- * The case record carries the README's headline safety claims — an appeal
+ * The case record carries the README's headline safety claims - an appeal
  * halts settlement and only a person can end it; only the losing party can
- * appeal; a payout needs a proven address — so its state machine is tested
+ * appeal; a payout needs a proven address - so its state machine is tested
  * transition by transition, including the ones that must be refused. It is
  * pure: the on-chain transfer happens in the route between prepare and
  * complete, and here it is a stub.

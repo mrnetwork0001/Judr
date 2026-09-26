@@ -196,7 +196,7 @@ test("indeterminate decisive clauses drag clause support down", () => {
 });
 
 test("a re-run that errored counts as a run that did not agree", () => {
-  // Both extra runs failed. Before the fix this reported 1/1 and scored 1.0 —
+  // Both extra runs failed. Before the fix this reported 1/1 and scored 1.0 -
   // total failure of the stability check looked identical to a perfect one.
   const tally = tallyConsensus([null, null], "plaintiff");
   assert.deepEqual(tally, { runs: 3, agreed: 1, failed: 2 });

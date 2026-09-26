@@ -1,7 +1,7 @@
 /**
  * The SERV client against a local mock of the chat-completions endpoint.
  * No network, no key: the point is the parts that break on first live contact
- * — frame splitting, the repair loop, retries and the error messages.
+ * - frame splitting, the repair loop, retries and the error messages.
  */
 
 import { test, after } from "node:test";

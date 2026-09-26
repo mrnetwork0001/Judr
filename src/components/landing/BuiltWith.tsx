@@ -19,7 +19,7 @@ const STACK = [
   {
     term: "Next.js 16 · React 19",
     detail:
-      "Server-streamed arbitration over SSE, vanilla CSS, no UI framework and no state library. Fifty unit tests run on Node's type stripping — no test framework, no build step — including the SERV client against a mock endpoint and the allocation policy against the recorded vault list.",
+      "Server-streamed arbitration over SSE, vanilla CSS, no UI framework and no state library. Fifty unit tests run on Node's type stripping - no test framework, no build step - including the SERV client against a mock endpoint and the allocation policy against the recorded vault list.",
   },
 ];
 

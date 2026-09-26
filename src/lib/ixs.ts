@@ -2,7 +2,7 @@
  * IXS vaults.
  *
  * Two sources, both public and unauthenticated: the IXS REST API for the vault
- * list and its reported yield, and — for the vault their SDK knows — a direct
+ * list and its reported yield, and - for the vault their SDK knows - a direct
  * on-chain read of totals over Avalanche's public RPC. Transactions are built
  * with IXS's own @ixswap1/vault-agent-sdk, which returns unsigned call data
  * and stops there; Judr holds no key and signs nothing. That is the SDK's
@@ -57,7 +57,7 @@ export interface IxsSnapshot {
 }
 
 /* ---------------------------------------------------------------- */
-/* Recorded snapshot — the live read of 2026-09-26, for when the API  */
+/* Recorded snapshot - the live read of 2026-09-26, for when the API  */
 /* is down. Served with source: "recorded".                          */
 /* ---------------------------------------------------------------- */
 

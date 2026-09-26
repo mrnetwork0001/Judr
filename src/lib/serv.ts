@@ -89,7 +89,7 @@ export function hasServKey(): boolean {
 
 /**
  * Runs one typed step: schema-constrained request, local validation, bounded
- * repair. Throws if the step cannot produce schema-valid output — the graph
+ * repair. Throws if the step cannot produce schema-valid output - the graph
  * halts rather than passing malformed state downstream.
  */
 export async function completeTyped<T>(opts: TypedOptions): Promise<TypedResult<T>> {

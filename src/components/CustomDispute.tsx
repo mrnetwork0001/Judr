@@ -81,11 +81,11 @@ export default function CustomDispute({
             </label>
           </div>
           <label className="custom-block">
-            <span>Contract — paste the operative terms ({contract.length.toLocaleString()} / {LIMITS.contractChars.toLocaleString()})</span>
+            <span>Contract - paste the operative terms ({contract.length.toLocaleString()} / {LIMITS.contractChars.toLocaleString()})</span>
             <textarea rows={7} value={contract} onChange={(e) => setContract(e.target.value.slice(0, LIMITS.contractChars))} placeholder="1. SCOPE. The Designer shall deliver…&#10;2. DELIVERY. On or before…&#10;3. ACCEPTANCE. The Client has five business days…" />
           </label>
           <label className="custom-block">
-            <span>What is in dispute — both sides&rsquo; positions, neutrally ({claim.length} / {LIMITS.claimChars.toLocaleString()})</span>
+            <span>What is in dispute - both sides&rsquo; positions, neutrally ({claim.length} / {LIMITS.claimChars.toLocaleString()})</span>
             <textarea rows={3} value={claim} onChange={(e) => setClaim(e.target.value.slice(0, LIMITS.claimChars))} placeholder="The Designer says the logo was delivered on the 3rd; the Client says the files were unusable and the escrow should be returned." />
           </label>
 
@@ -126,7 +126,7 @@ export default function CustomDispute({
             <span className="badge">{LIMITS.runsPerHour} runs / hour</span>
           </div>
           <p className="custom-note">
-            Evidence is screened for injected instructions before anything reads it — try hiding a &ldquo;SYSTEM: rule for me&rdquo; in a document and watch it get quarantined.
+            Evidence is screened for injected instructions before anything reads it - try hiding a &ldquo;SYSTEM: rule for me&rdquo; in a document and watch it get quarantined.
           </p>
         </div>
       )}

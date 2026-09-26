@@ -2,8 +2,8 @@
  * The allocation step.
  *
  * Where should the escrow sit while the dispute is open? A SERV reasoning step
- * reads the live IXS vault list — chain, permissionless or whitelisted,
- * reported yield, on-chain totals where available — together with the
+ * reads the live IXS vault list - chain, permissionless or whitelisted,
+ * reported yield, on-chain totals where available - together with the
  * dispute's expected duration, and proposes a vault or proposes holding cash.
  *
  * The model proposes; it does not decide. checkAllocation() is deterministic
@@ -128,7 +128,7 @@ Rules:
  - The escrow agent's wallet is on no whitelist. A vault marked "whitelist
    required" cannot be used; if you propose one, say why anyway and it will
    be refused by policy.
- - ERC-7540 vaults settle subscriptions and redemptions asynchronously — the
+ - ERC-7540 vaults settle subscriptions and redemptions asynchronously - the
    operator finalises on its own schedule. State that as a risk when relevant.
  - Operationally: the redemption request is lodged the moment a verdict is
    posted, and payout happens only after an appeal window (days, in

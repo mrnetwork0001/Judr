@@ -3,7 +3,7 @@
  *
  * The schemas do double duty: they are sent to SERV as `response_format`
  * (structured output), and they are re-validated locally on the way back.
- * Never trust the provider to have enforced its own contract — a step whose
+ * Never trust the provider to have enforced its own contract - a step whose
  * output fails validation is repaired or the run halts.
  */
 
@@ -109,7 +109,7 @@ export const GUARD_SCHEMA = obj({
 
 /**
  * Validates `value` against `schema`, collecting every error rather than
- * failing on the first — the error list is fed back to the model as a repair
+ * failing on the first - the error list is fed back to the model as a repair
  * prompt, so it needs to be complete.
  */
 export function validate(

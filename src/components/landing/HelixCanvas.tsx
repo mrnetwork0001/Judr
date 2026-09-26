@@ -4,7 +4,7 @@
  * The helix.
  *
  * A fixed, full-viewport WebGL scene behind the landing page: a ribbon of
- * rounded plates — documents, in Judr's terms — laid along a gentle curve and
+ * rounded plates - documents, in Judr's terms - laid along a gentle curve and
  * twisted into a helix. Glossy pearl and brass under a studio environment,
  * drawn at low opacity so the sheen and the glass do the rest.
  *
@@ -23,7 +23,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 /* ---------------------------------------------------------------- */
-/* Geometry — one rounded plate, extruded with a soft bevel          */
+/* Geometry - one rounded plate, extruded with a soft bevel          */
 /* ---------------------------------------------------------------- */
 
 const PLATE_W = 2.5;
@@ -162,7 +162,7 @@ function light(scene: THREE.Scene): void {
 }
 
 /* ---------------------------------------------------------------- */
-/* Scroll keyframes — one per landing section                        */
+/* Scroll keyframes - one per landing section                        */
 /* ---------------------------------------------------------------- */
 
 interface Pose {

@@ -39,25 +39,25 @@ export const viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Judr — Autonomous Arbitration for Tokenized RWA Vaults",
+  title: "Judr - Autonomous Arbitration for Tokenized RWA Vaults",
   description: DESCRIPTION,
   openGraph: {
     type: "website",
     siteName: "Judr",
-    title: "Judr — Too small to litigate. Too big to walk away from.",
+    title: "Judr - Too small to litigate. Too big to walk away from.",
     description: DESCRIPTION,
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Judr — autonomous arbitration for tokenized RWA vaults",
+        alt: "Judr - autonomous arbitration for tokenized RWA vaults",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Judr — Too small to litigate. Too big to walk away from.",
+    title: "Judr - Too small to litigate. Too big to walk away from.",
     description: DESCRIPTION,
     images: ["/og.png"],
   },

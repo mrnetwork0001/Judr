@@ -5,7 +5,7 @@
  * it live. Custom input goes to the owner's SERV key, so it is bounded three
  * ways: sizes are capped, it needs a live key (the recorded run cannot decide
  * a dispute it has never seen), and each session gets a few runs an hour.
- * Everything else — screening, the graph, verification, settlement — is the
+ * Everything else - screening, the graph, verification, settlement - is the
  * same path the demo takes.
  */
 
@@ -41,7 +41,7 @@ export function toBundle(input: CustomDisputeInput, vaultId: string): CustomResu
   const defendant = clean(input.defendant, LIMITS.nameChars) || "Defendant";
   const title = clean(input.title, 120) || "Custom dispute";
 
-  if (contract.length < 40) return { ok: false, error: "The contract is too short to arbitrate — paste the operative terms." };
+  if (contract.length < 40) return { ok: false, error: "The contract is too short to arbitrate - paste the operative terms." };
   if (contract.length > LIMITS.contractChars) return { ok: false, error: `The contract is over ${LIMITS.contractChars.toLocaleString()} characters.` };
   if (claim.length < 20) return { ok: false, error: "Say what is in dispute, in a sentence or two." };
   if (claim.length > LIMITS.claimChars) return { ok: false, error: `The claim is over ${LIMITS.claimChars.toLocaleString()} characters.` };
@@ -82,7 +82,7 @@ export function toBundle(input: CustomDisputeInput, vaultId: string): CustomResu
 }
 
 /* ---------------------------------------------------------------- */
-/* Rate limits — in memory, sliding windows                          */
+/* Rate limits - in memory, sliding windows                          */
 /*                                                                   */
 /* Every arbitration spends the owner's SERV credit, so runs are     */
 /* capped per session per hour and across all sessions per day, in   */

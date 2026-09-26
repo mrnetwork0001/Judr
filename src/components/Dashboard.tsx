@@ -435,7 +435,7 @@ export default function Dashboard({
               />
               <StatTile
                 label="Projected yield"
-                value={vault.allocation ? `+${accrued?.amount ?? "0.00"}` : "—"}
+                value={vault.allocation ? `+${accrued?.amount ?? "0.00"}` : "-"}
                 unit={vault.allocation ? vault.asset : undefined}
                 caption={
                   vault.allocation
@@ -450,7 +450,7 @@ export default function Dashboard({
                     ? result.verdict.winner === "plaintiff"
                       ? activeDispute.plaintiff.name.split(" (")[0]
                       : activeDispute.defendant.name.split(" (")[0]
-                    : "—"
+                    : "-"
                 }
                 caption={
                   result
@@ -463,7 +463,7 @@ export default function Dashboard({
               />
               <StatTile
                 label="Cost of decision"
-                value={result ? (result.cost.mode === "live" ? `$${result.cost.usd.toFixed(2)}` : "$0.00") : "—"}
+                value={result ? (result.cost.mode === "live" ? `$${result.cost.usd.toFixed(2)}` : "$0.00") : "-"}
                 caption={
                   result
                     ? result.cost.mode === "live"
@@ -489,7 +489,7 @@ export default function Dashboard({
                       <button className="link" onClick={() => { setPoisoned(true); go("dispute"); }} disabled={running}>Set it up →</button>
                     </li>
                     <li>
-                      <strong>Sign in with a wallet.</strong> Join as the Client to appeal, as the Reviewer to decide, as the Contractor to be paid — real USDC on {escrow.chain.name}.
+                      <strong>Sign in with a wallet.</strong> Join as the Client to appeal, as the Reviewer to decide, as the Contractor to be paid - real USDC on {escrow.chain.name}.
                     </li>
                     <li>
                       <strong>Appeal, then review.</strong> An appeal freezes the escrow; the reviewer upholds or overturns on the record and the payout goes on-chain.
@@ -747,7 +747,7 @@ function StepCard({
         <div className="step-body">
           {step.repairs.map((repair) => (
             <div key={repair.attempt} className="repair-note">
-              ⟲ schema violation — repair {repair.attempt}: {repair.errors[0]}
+              ⟲ schema violation - repair {repair.attempt}: {repair.errors[0]}
             </div>
           ))}
 
@@ -815,7 +815,7 @@ function Findings({
           <div className="basis">{finding.rationale}</div>
           <div className="cites">
             cites
-            {finding.supporting_evidence.length === 0 && <span>— nothing</span>}
+            {finding.supporting_evidence.length === 0 && <span>- nothing</span>}
             {finding.supporting_evidence.map((id) => (
               <span key={id} className="cite">
                 {id}
@@ -866,7 +866,7 @@ function AuditTrail({ result }: { result: ArbitrationResult }) {
 
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
           <div className="conf-cell" style={{ padding: 0 }}>
-            <div className="k">Verdict digest — the payload the vault settles against</div>
+            <div className="k">Verdict digest - the payload the vault settles against</div>
             <div className="digest">{result.digest}</div>
           </div>
         </div>
@@ -968,7 +968,7 @@ function IxsVaultsPanel() {
                   <td>{v.chainName}</td>
                   <td><span className={`badge ${v.permissionless ? "ok" : ""}`}>{v.permissionless ? "permissionless" : "whitelist"}</span></td>
                   <td className="mono">{(v.ttmRate * 100).toFixed(2)}%</td>
-                  <td className="mono dim">{v.onchain ? `${v.onchain.tvl.toLocaleString("en-US")} ${v.asset.symbol} · share ${v.onchain.sharePrice}` : "—"}</td>
+                  <td className="mono dim">{v.onchain ? `${v.onchain.tvl.toLocaleString("en-US")} ${v.asset.symbol} · share ${v.onchain.sharePrice}` : "-"}</td>
                 </tr>
               ))}
             </tbody>

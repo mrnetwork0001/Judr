@@ -20,7 +20,7 @@ export interface YieldTerms {
   days: number;
   /** Judr's fee in basis points of the yield earned, e.g. 2500 = 25%. */
   feeBps: number;
-  /** A floor on the fee, in minor units — applies only when yield covers it. */
+  /** A floor on the fee, in minor units - applies only when yield covers it. */
   feeFloor?: bigint;
 }
 
@@ -48,7 +48,7 @@ export function accrue(principal: bigint, annualRate: number, days: number): big
 }
 
 /**
- * The split. The fee comes out of yield only — if the window was too short to
+ * The split. The fee comes out of yield only - if the window was too short to
  * earn the floor, the fee is whatever was earned, and the parties owe nothing
  * further. Principal is never touched.
  */

@@ -41,7 +41,7 @@ export interface PartyRef {
 }
 
 /* ---------------------------------------------------------------- */
-/* Step outputs — one interface per node in the reasoning graph.     */
+/* Step outputs - one interface per node in the reasoning graph.     */
 /* ---------------------------------------------------------------- */
 
 export interface Clause {
@@ -122,7 +122,7 @@ export interface GuardReport {
 }
 
 /* ---------------------------------------------------------------- */
-/* The audit trail — the actual product                              */
+/* The audit trail - the actual product                              */
 /* ---------------------------------------------------------------- */
 
 export interface StepRecord {
@@ -144,7 +144,7 @@ export interface StepRecord {
 }
 
 export interface Confidence {
-  /** 0..1, derived from step agreement — never self-reported by the model. */
+  /** 0..1, derived from step agreement - never self-reported by the model. */
   score: number;
   /**
    * How many independent adjudication runs agreed on the winner. A run that
@@ -170,7 +170,7 @@ export interface ArbitrationResult {
   trail: StepRecord[];
   startedAt: number;
   endedAt: number;
-  /** sha256 over the canonical verdict payload — what the vault signs on. */
+  /** sha256 over the canonical verdict payload - what the vault signs on. */
   digest: string;
   /** What this decision cost, from the provider's reported usage. */
   cost: DecisionCost;

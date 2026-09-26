@@ -166,7 +166,7 @@ function Settlement({
         <div className="note">
           {s?.payoutTx ? (
             <>
-              <strong>{s.display.payout} {vault.asset}</strong> paid on Base Sepolia to {vault.releasedTo?.name} —{" "}
+              <strong>{s.display.payout} {vault.asset}</strong> paid on Base Sepolia to {vault.releasedTo?.name} -{" "}
               <span className="mono">{vault.releasedTo?.address}</span>.{" "}
               <a href={s.payoutUrl} target="_blank" rel="noreferrer">View the transaction ↗</a>
             </>
@@ -179,7 +179,7 @@ function Settlement({
               <dd>{s.display.principal}</dd>
               {vault.allocation && (
                 <>
-                  <dt>Projected yield · {s.days} days at {(vault.allocation.rate * 100).toFixed(2)}% in {vault.allocation.symbol} — not executed</dt>
+                  <dt>Projected yield · {s.days} days at {(vault.allocation.rate * 100).toFixed(2)}% in {vault.allocation.symbol} - not executed</dt>
                   <dd>({s.display.projectedYield})</dd>
                 </>
               )}
@@ -210,7 +210,7 @@ function Settlement({
       <div className="settlement">
         <div className="note">
           An appeal was lodged inside the window. Release is halted and the
-          dispute is escalated to human review — Judr does not overrule an appeal.
+          dispute is escalated to human review - Judr does not overrule an appeal.
         </div>
         <span className="badge alert">
           <span className="dot" /> Halted
@@ -226,7 +226,7 @@ function Settlement({
           <>
             Funds do not move yet. The losing party has{" "}
             <span className="countdown">{formatRemaining(remaining)}</span> to
-            appeal. Release is refused by the vault until the window closes —
+            appeal. Release is refused by the vault until the window closes -
             the check lives with the funds, not with the caller.
           </>
         ) : (

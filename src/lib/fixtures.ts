@@ -3,7 +3,7 @@
  *
  * Committed as fixtures on purpose: a live demo must not depend on PDF parsing
  * succeeding on a conference wifi connection. Uploaded documents follow exactly
- * the same path through the graph — these are just pre-extracted text.
+ * the same path through the graph - these are just pre-extracted text.
  *
  * The dispute is built so the correct answer is *reasoned*, not guessable. On
  * the bare facts ("was the site delivered?") both parties sound plausible. The
@@ -15,7 +15,7 @@
 import type { DisputeBundle, EvidenceDoc } from "./types";
 
 const CONTRACT_TEXT = `WEB DEVELOPMENT SERVICES AGREEMENT
-Ref: IXS-VLT-4417 — escrowed amount: {AMOUNT} USDC
+Ref: IXS-VLT-4417 - escrowed amount: {AMOUNT} USDC
 
 Between: A. Moreau ("the Contractor") and B. Adeyemi ("the Client").
 
@@ -69,7 +69,7 @@ Date:   Tue Sep 8 14:22:41 2026 +0100`,
     text: `From: A. Moreau <a.moreau@example.com>
 To: B. Adeyemi <b.adeyemi@example.com>
 Date: Tue, 8 Sep 2026 14:31:02 +0100
-Subject: Delivery — v1.0, all five pages, staging is live
+Subject: Delivery - v1.0, all five pages, staging is live
 
 Hi B.,
 
@@ -81,7 +81,7 @@ pages from Schedule A:
 Per clause 4 you have five business days to flag anything. Two revision rounds
 are included if you want changes in that window.
 
-Production deployment is on your side per clause 3 — happy to talk you through
+Production deployment is on your side per clause 3 - happy to talk you through
 the DNS cutover whenever you're ready.
 
 Best,
@@ -91,7 +91,7 @@ A.`,
     id: "e3",
     party: "plaintiff",
     filename: "staging-uptime-report.txt",
-    text: `Uptime monitor — staging-4417.contractor-host.example
+    text: `Uptime monitor - staging-4417.contractor-host.example
 Monitoring period: 2026-09-08 14:28 UTC+1 → 2026-09-21 09:00 UTC+1
 
   Availability:        99.97%
@@ -121,7 +121,7 @@ const CLIENT_EVIDENCE: EvidenceDoc[] = [
     text: `From: B. Adeyemi <b.adeyemi@example.com>
 To: A. Moreau <a.moreau@example.com>
 Date: Wed, 16 Sep 2026 17:48:19 +0100
-Subject: Site was never delivered — escrow
+Subject: Site was never delivered - escrow
 
 A.,
 
@@ -142,7 +142,7 @@ B.`,
 Address bar:  https://adeyemi-consulting.example/
 
 Page content:
-    404 — Not Found
+    404 - Not Found
     nginx/1.24.0
 
 Browser console:
@@ -187,7 +187,7 @@ export const DEMO_DISPUTE: DisputeBundle = {
   vaultId: "IXS-VLT-4417",
   contract: {
     id: "contract-4417",
-    title: "Web Development Services Agreement — IXS-VLT-4417",
+    title: "Web Development Services Agreement - IXS-VLT-4417",
     text: CONTRACT_TEXT,
   },
   claim:

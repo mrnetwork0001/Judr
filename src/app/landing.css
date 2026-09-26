@@ -1,8 +1,8 @@
 /*
  * Landing page styles.
  *
- * Shares the app's tokens from globals.css — same silver canvas, same sheen
- * behind it, same glass — so arriving at /app feels like walking further into
+ * Shares the app's tokens from globals.css - same silver canvas, same sheen
+ * behind it, same glass - so arriving at /app feels like walking further into
  * the same building. What changes is register: the display serif, far more
  * air, a floating nav, and the product shown as specimens on the page rather
  * than as a working dashboard.
@@ -161,7 +161,7 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* Motion — one rise on load, honoured only if motion is welcome     */
+/* Motion - one rise on load, honoured only if motion is welcome     */
 /* ---------------------------------------------------------------- */
 
 .rise {
@@ -192,7 +192,7 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* Nav — a floating glass pill, after the reference                  */
+/* Nav - a floating glass pill, after the reference                  */
 /* ---------------------------------------------------------------- */
 
 .lp-nav {
@@ -771,7 +771,7 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* Closing — a glass band, after the reference                       */
+/* Closing - a glass band, after the reference                       */
 /* ---------------------------------------------------------------- */
 
 .closing {

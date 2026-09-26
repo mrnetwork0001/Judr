@@ -3,7 +3,7 @@
  *
  * A pure state machine over one escrow: who the parties are (proven wallet
  * addresses), where the money sits, the verdict, the appeal window, and how
- * it settled. The money itself is not here — it is testnet USDC held by the
+ * it settled. The money itself is not here - it is testnet USDC held by the
  * escrow agent (see escrow.ts), and the API route moves it on-chain between
  * prepareRelease() and completeRelease(). Keeping the state machine free of
  * network calls is what keeps every refused transition testable.
@@ -14,7 +14,7 @@
  * closes without an appeal. That is what makes the system safe to be wrong
  * occasionally: being wrong costs a delay, not somebody's ten thousand dollars.
  *
- * In-memory on purpose — this is the mock. The state machine and the digest are
+ * In-memory on purpose - this is the mock. The state machine and the digest are
  * what a real deployment would keep; the storage is not.
  */
 
@@ -210,7 +210,7 @@ export function getVault(sessionId: string): Vault {
   return vault;
 }
 
-/** A fresh case for rendering only — never stored, never mutated. */
+/** A fresh case for rendering only - never stored, never mutated. */
 export function previewVault(): Vault {
   return freshVault();
 }
@@ -282,8 +282,8 @@ export function roleOf(vault: Vault, address: string | undefined | null): Role |
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 /**
- * Records where the escrow sits. Allowed while funded or disputed — the
- * agent may rebalance while a case is open — but not once a verdict is
+ * Records where the escrow sits. Allowed while funded or disputed - the
+ * agent may rebalance while a case is open - but not once a verdict is
  * posted, because the redemption clock is then already running.
  */
 export function setAllocation(sessionId: string, allocation: Allocation): Vault {
@@ -301,9 +301,9 @@ export function setAllocation(sessionId: string, allocation: Allocation): Vault 
 }
 
 /**
- * The agent re-evaluated and chose to stay. The allocation date is kept —
+ * The agent re-evaluated and chose to stay. The allocation date is kept -
  * yield has been accruing since the escrow was placed, and a fresh timestamp
- * would silently discard it — and the decision is written to the log.
+ * would silently discard it - and the decision is written to the log.
  */
 export function holdAllocation(sessionId: string, rationale: string, source: "live" | "recorded"): Vault {
   const vault = getVault(sessionId);
@@ -419,7 +419,7 @@ export function appeal(sessionId: string, reason: string, by?: string | null): V
   vault.events.push({
     at: Date.now(),
     label: "Appeal lodged",
-    detail: `${reason} — release halted, escalated to human review`,
+    detail: `${reason} - release halted, escalated to human review`,
   });
   return vault;
 }
@@ -464,7 +464,7 @@ export function completeReview(
   vault.events.push({
     at: now,
     label: decision === "uphold" ? "Human review: verdict upheld" : "Human review: verdict overturned",
-    detail: `${vault.review.note} — ${vault.settlement.display.payout} ${vault.asset} paid to ${payee.name} (${short(payee.address ?? "")}) · tx ${paid.txHash.slice(0, 10)}…`,
+    detail: `${vault.review.note} - ${vault.settlement.display.payout} ${vault.asset} paid to ${payee.name} (${short(payee.address ?? "")}) · tx ${paid.txHash.slice(0, 10)}…`,
   });
   return vault;
 }

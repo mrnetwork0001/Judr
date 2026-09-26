@@ -1,5 +1,5 @@
 /*
- * Judr — vanilla CSS, no framework.
+ * Judr - vanilla CSS, no framework.
  *
  * Light silk. A silver canvas with a fixed, blurred diagonal light sweep
  * behind everything, and frosted-glass surfaces on top of it. Every colour in
@@ -122,7 +122,7 @@ button:disabled {
   animation: sheen-drift 48s ease-in-out infinite alternate;
 }
 
-/* A slow breath across the diagonal — enough to feel lit, not enough to notice moving. */
+/* A slow breath across the diagonal - enough to feel lit, not enough to notice moving. */
 @keyframes sheen-drift {
   from {
     transform: translate3d(-2.5%, -1.5%, 0);
@@ -1373,7 +1373,7 @@ button:disabled {
 }
 
 /* ---------------------------------------------------------------- */
-/* App shell — sidebar, page header, stat tiles                      */
+/* App shell - sidebar, page header, stat tiles                      */
 /* ---------------------------------------------------------------- */
 
 .app-shell {
@@ -1939,7 +1939,7 @@ button:disabled {
 }
 
 /* ---------------------------------------------------------------- */
-/* Sidebar status card — labelled rows                               */
+/* Sidebar status card - labelled rows                               */
 /* ---------------------------------------------------------------- */
 
 .app-side-card {

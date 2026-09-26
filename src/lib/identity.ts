@@ -3,7 +3,7 @@
  *
  * A visitor proves control of an address by signing a message that names the
  * vault, the role they are joining as, and their session. The server verifies
- * the signature; nothing is taken on assertion. No funds move here — this is
+ * the signature; nothing is taken on assertion. No funds move here - this is
  * who you are, not what you hold. Payouts go to the winning party's proven
  * address, and an appeal is accepted only from the losing party's.
  */
@@ -30,7 +30,7 @@ export const CHAINS: Record<"base-sepolia" | "base", ChainInfo> = {
 
 export function joinMessage(vaultId: string, role: Role, sessionId: string, address: Address): string {
   return [
-    `Judr — join ${vaultId} as ${role}`,
+    `Judr - join ${vaultId} as ${role}`,
     ``,
     `Address: ${address}`,
     `Session: ${sessionId}`,

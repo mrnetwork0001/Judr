@@ -5,7 +5,7 @@ import { Wordmark } from "./Motif";
 
 /*
  * Wordmark left, section links right, nothing else. Launch app deliberately
- * lives elsewhere — the hero, the closing band and the footer — so the bar
+ * lives elsewhere - the hero, the closing band and the footer - so the bar
  * stays a table of contents. It is transparent over the hero and grows a
  * hairline once the page has moved, so the first screen stays uninterrupted.
  */

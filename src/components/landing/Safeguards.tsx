@@ -11,7 +11,7 @@ const COMMITMENTS = [
   {
     title: "Judr does not move money",
     body:
-      "A verdict is posted, never executed. It carries a digest over the decision payload and opens an appeal window. The vault itself refuses a release call until that window closes — the check lives with the funds, not with the caller. An appeal halts settlement and escalates to human review, and Judr cannot overrule one.",
+      "A verdict is posted, never executed. It carries a digest over the decision payload and opens an appeal window. The vault itself refuses a release call until that window closes - the check lives with the funds, not with the caller. An appeal halts settlement and escalates to human review, and Judr cannot overrule one.",
   },
   {
     title: "Tampered evidence is quarantined, not cleaned up",

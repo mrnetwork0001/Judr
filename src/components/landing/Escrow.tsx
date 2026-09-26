@@ -51,8 +51,8 @@ export default async function Escrow() {
           <p className="lead" style={{ marginTop: 14 }}>
             That is the business model. Nobody pays out of pocket to have a dispute
             decided; the time the money was stuck pays for it. In this build the deposit
-            is built and shown, not sent — the agent is on Base, the vaults are on
-            Avalanche and BSC — so the figures below are a projection at the live rate.
+            is built and shown, not sent - the agent is on Base, the vaults are on
+            Avalanche and BSC - so the figures below are a projection at the live rate.
           </p>
         </div>
 
@@ -112,7 +112,7 @@ export default async function Escrow() {
                     <td className="mono dim">
                       {v.onchain
                         ? `${v.onchain.tvl.toLocaleString("en-US")} ${v.asset.symbol} · share ${v.onchain.sharePrice}`
-                        : "—"}
+                        : "-"}
                     </td>
                   </tr>
                 ))}

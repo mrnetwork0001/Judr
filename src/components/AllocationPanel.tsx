@@ -86,7 +86,7 @@ export default function AllocationPanel({
           </>
         ) : (
           <p className="alloc-why">
-            The escrow is held as USDC in the agent&rsquo;s wallet. Ask the agent where it should sit: it reads IXS&rsquo;s live vault list and proposes a vault or cash, and the policy decides. The deposit itself is built, not sent — the agent is on Base Sepolia and IXS vaults are on Avalanche and BSC mainnet.
+            The escrow is held as USDC in the agent&rsquo;s wallet. Ask the agent where it should sit: it reads IXS&rsquo;s live vault list and proposes a vault or cash, and the policy decides. The deposit itself is built, not sent - the agent is on Base Sepolia and IXS vaults are on Avalanche and BSC mainnet.
           </p>
         )}
 

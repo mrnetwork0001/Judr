@@ -1,5 +1,5 @@
 /**
- * The escrow agent — a real wallet on Base Sepolia, run through Coinbase
+ * The escrow agent - a real wallet on Base Sepolia, run through Coinbase
  * AgentKit.
  *
  * The agent holds the escrow as testnet USDC, tops itself up from Coinbase's
@@ -38,7 +38,7 @@ const AGENT_NAME = process.env.CDP_AGENT_NAME ?? `judr-escrow-agent-${NETWORK}`;
 /**
  * Payout caps. A public demo that pays whoever wins a case is a faucet unless
  * bounded: one payout per address per day, a daily outflow ceiling, and a
- * switch. In memory — they reset with the process — which is acceptable for
+ * switch. In memory - they reset with the process - which is acceptable for
  * a wallet holding pocket money and not otherwise.
  */
 export const CAPS = {

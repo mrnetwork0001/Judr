@@ -3,7 +3,7 @@
  *
  * Reads the live IXS vault list, asks the SERV allocation step (or serves the
  * recorded decision when no key is configured), runs the proposal through the
- * deterministic policy, and applies the outcome to the caller's vault —
+ * deterministic policy, and applies the outcome to the caller's vault -
  * allocated, held as cash, or refused. Every branch is written to the vault's
  * log, and the unsigned subscription request is returned so the trail shows
  * what a signer would send.

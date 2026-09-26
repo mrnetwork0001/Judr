@@ -3,7 +3,7 @@ import { Eyebrow } from "./Motif";
 /*
  * The argument section. The easy version of this product is one prompt that
  * reads everything and announces a winner; this is the picture of why Judr
- * isn't that. The diagram is the real pipeline — the node names are the step
+ * isn't that. The diagram is the real pipeline - the node names are the step
  * names in src/lib/graph/steps.ts.
  */
 
@@ -107,7 +107,7 @@ export default function Graph() {
               <i /> model step, schema-bound
             </span>
             <span>
-              <i className="det" /> deterministic — plain code, no model
+              <i className="det" /> deterministic - plain code, no model
             </span>
             <span>adjudicate runs three times; agreement becomes confidence</span>
           </div>
@@ -119,7 +119,7 @@ export default function Graph() {
             <p>
               Every step records its input digest, engine, schema result and output. A
               losing party can be shown precisely which clause and which document decided
-              the matter — and can attack that step, rather than the system as a whole.
+              the matter - and can attack that step, rather than the system as a whole.
             </p>
           </article>
           <article className="card">

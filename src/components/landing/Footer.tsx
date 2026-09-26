@@ -12,7 +12,7 @@ export default function Footer() {
             <Wordmark />
             <p className="blurb">
               An arbitration layer for tokenized real-world assets. Evidence in, a verdict
-              with a complete audit trail out, and a vault that settles against it — with
+              with a complete audit trail out, and a vault that settles against it - with
               an appeal window before anything moves.
             </p>
           </div>

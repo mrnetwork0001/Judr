@@ -62,7 +62,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    raiseDispute(session.id, "Escrow release contested — arbitration requested");
+    raiseDispute(session.id, "Escrow release contested - arbitration requested");
   } catch (error) {
     const status = error instanceof VaultError ? 409 : 500;
     return withSession(

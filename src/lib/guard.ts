@@ -7,7 +7,7 @@
  * that feeds uploaded documents to a model.
  *
  * Two layers, deliberately:
- *   1. Deterministic pattern matching — cannot itself be talked out of firing.
+ *   1. Deterministic pattern matching - cannot itself be talked out of firing.
  *   2. A model pass for the phrasings the patterns miss.
  *
  * High-severity hits are quarantined: the document is excluded from
@@ -123,7 +123,7 @@ async function screenModel(docs: EvidenceDoc[], signal?: AbortSignal): Promise<M
     return { status: "ran", flags: result.value.flags.filter((f) => ids.has(f.evidence_id)) };
   } catch (error) {
     // Screening is defence in depth, not a gate. If the model pass fails the
-    // deterministic pass still stands and the run continues — but the audit
+    // deterministic pass still stands and the run continues - but the audit
     // trail must say so, rather than recording a model check that never ran.
     return { status: "failed", error: error instanceof Error ? error.message : String(error) };
   }

@@ -103,7 +103,7 @@ export async function runArbitration(opts: RunOptions): Promise<ArbitrationResul
     }
   }
 
-  // Step 0 — screen the evidence before any of it reaches the reasoning steps.
+  // Step 0 - screen the evidence before any of it reaches the reasoning steps.
   const guardStart = Date.now();
   emit({ type: "step_started", step: "screen", label: "Screening evidence", at: guardStart });
   const guard = await screenEvidence(bundle.evidence, {
@@ -155,7 +155,7 @@ export async function runArbitration(opts: RunOptions): Promise<ArbitrationResul
     (args) => evaluateEvidence(bundle, clauses, claim, admissible, args),
   );
 
-  // Step 4 — adjudicate. The first run is the verdict of record; the extra runs
+  // Step 4 - adjudicate. The first run is the verdict of record; the extra runs
   // exist to measure whether the decision is stable, which is what makes the
   // confidence number mean something.
   const verdict = await step<Verdict>(
@@ -176,7 +176,7 @@ export async function runArbitration(opts: RunOptions): Promise<ArbitrationResul
     signal,
   });
 
-  // Step 5 — verification. Deterministic on purpose: a model asked to check its
+  // Step 5 - verification. Deterministic on purpose: a model asked to check its
   // own citations will agree with itself. This one actually resolves the ids.
   const verifyStart = Date.now();
   emit({ type: "step_started", step: "verify", label: "Verifying citations", at: verifyStart });
@@ -301,7 +301,7 @@ async function measureConsensus(args: {
 /**
  * Counts the re-runs. The verdict of record is run one and agrees with itself
  * by definition. A re-run that errored is a run that happened and did not
- * agree — it is never dropped, because dropping it would let a total failure
+ * agree - it is never dropped, because dropping it would let a total failure
  * of the stability check score exactly like a perfect one.
  */
 export function tallyConsensus(

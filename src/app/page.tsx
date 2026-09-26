@@ -12,7 +12,7 @@ import ClosingCta from "@/components/landing/ClosingCta";
 import Footer from "@/components/landing/Footer";
 
 export const metadata: Metadata = {
-  title: "Judr — Too small to litigate. Too big to walk away from.",
+  title: "Judr - Too small to litigate. Too big to walk away from.",
   description:
     "Judr arbitrates disputes over escrowed real-world assets with a bounded reasoning graph on SERV: a verdict with a complete audit trail, and a vault that settles against it after an appeal window.",
 };

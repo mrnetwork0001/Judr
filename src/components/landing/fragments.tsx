@@ -5,7 +5,7 @@
  * Two rules hold them honest. They are built from the app's own classes in
  * globals.css, so a change to the dashboard's styling shows up here. And their
  * content is pulled from the recorded run in replay.ts and from the real
- * evidence screener — the flag below is produced by calling screenHeuristic on
+ * evidence screener - the flag below is produced by calling screenHeuristic on
  * the actual tampered document, not transcribed from a screenshot of it.
  *
  * They are inert: no buttons, no handlers, nothing focusable.
@@ -18,7 +18,7 @@ import type { ArbitrationResult } from "@/lib/types";
 
 /**
  * A real decision. sample-run.json is the output of a live run of the sample
- * case on SERV, saved as it came back — nothing in it was written by hand.
+ * case on SERV, saved as it came back - nothing in it was written by hand.
  */
 const RUN = sample as unknown as ArbitrationResult;
 const { clauses, evaluation, verdict } = RUN;
@@ -101,7 +101,7 @@ export function ClauseSpecimen({ className }: { className?: string }) {
   );
 }
 
-/** One clause finding — a decisive one, with both sides recorded. */
+/** One clause finding - a decisive one, with both sides recorded. */
 export function FindingSpecimen({ className }: { className?: string }) {
   const decisive = new Set(verdict.decisive_clauses);
   const finding = evaluation.findings.find((f) => decisive.has(f.clause_id) && f.finding !== "satisfied")
