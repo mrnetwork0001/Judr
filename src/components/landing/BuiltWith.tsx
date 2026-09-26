@@ -20,7 +20,7 @@ const STACK = [
 
 export default function BuiltWith() {
   return (
-    <section aria-labelledby="built-title" className="section sunken">
+    <section id="built" aria-labelledby="built-title" className="section sunken">
       <div className="lp-wrap">
         <div className="section-head">
           <Eyebrow>Built with</Eyebrow>

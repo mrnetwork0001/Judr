@@ -165,7 +165,9 @@ serves the recorded run, labelled as such.
 | [`src/app/api/arbitrate/route.ts`](src/app/api/arbitrate/route.ts) | SSE stream of the run |
 
 Next.js 16, React 19, vanilla CSS. No UI framework, no state library, no test
-framework — the only runtime dependency is Next itself.
+framework. Two runtime dependencies: Next, and Three.js for the landing page's
+scroll-driven helix — loaded after hydration, landing page only, and the page
+is complete without it.
 
 ## Honest limits
 

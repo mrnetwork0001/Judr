@@ -106,7 +106,7 @@ button:disabled {
 .sheen {
   position: fixed;
   inset: -20%;
-  z-index: -1;
+  z-index: -2;
   pointer-events: none;
   filter: blur(30px);
   background: linear-gradient(

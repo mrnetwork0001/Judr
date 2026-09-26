@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./landing.css";
+import HelixScene from "@/components/landing/HelixScene";
 import LandingNav from "@/components/landing/LandingNav";
 import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
@@ -21,6 +22,7 @@ export default function LandingPage() {
       <a className="skip" href="#main">
         Skip to content
       </a>
+      <HelixScene />
       <LandingNav />
       <main id="main">
         <Hero />

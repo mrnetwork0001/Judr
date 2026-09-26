@@ -3,7 +3,7 @@ import { ScalesMark } from "./Motif";
 
 export default function ClosingCta() {
   return (
-    <section aria-labelledby="closing-title" className="closing">
+    <section id="closing" aria-labelledby="closing-title" className="closing">
       <div className="lp-wrap">
         <div className="closing-band closing-grid">
         <div>

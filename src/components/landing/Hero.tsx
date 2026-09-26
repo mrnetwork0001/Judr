@@ -45,7 +45,7 @@ function HeroVignette() {
 
 export default function Hero() {
   return (
-    <section aria-labelledby="hero-title" className="hero">
+    <section id="hero" aria-labelledby="hero-title" className="hero">
       <div className="lp-wrap hero-grid">
         <div>
           <div className="rise">
