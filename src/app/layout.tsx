@@ -22,12 +22,16 @@ const instrumentSerif = Instrument_Serif({
 });
 
 /**
- * Absolute URLs for social cards. Render sets RENDER_EXTERNAL_URL on its own;
- * any other host sets NEXT_PUBLIC_SITE_URL. Localhost is the fallback so a
- * dev build never emits a broken card.
+ * Absolute URLs for social cards. SITE_URL is read at render time on the
+ * server; NEXT_PUBLIC_SITE_URL is inlined at build time (so it must be a
+ * build argument in Docker); Render sets RENDER_EXTERNAL_URL on its own.
+ * Localhost is the fallback so a dev build never emits a broken card.
  */
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? process.env.RENDER_EXTERNAL_URL ?? "http://localhost:3000";
+  process.env.SITE_URL ??
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.RENDER_EXTERNAL_URL ??
+  "http://localhost:3000";
 
 const DESCRIPTION =
   "Autonomous arbitration for tokenized RWA escrow vaults. Evidence in, a verdict with a complete audit trail out, and a vault that settles against it after an appeal window.";

@@ -1,9 +1,12 @@
 # For a server that already runs a reverse proxy on 80/443 (Caddy, nginx…):
 # the app only, bound to localhost on PORT. Point the proxy at 127.0.0.1:PORT.
-#   PORT=3380 docker compose -f docker-compose.behind-proxy.yml up -d --build
+#   SITE_URL=https://judr.example.com PORT=3380 docker compose -f docker-compose.behind-proxy.yml up -d --build
 services:
   judr:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:3000}
     container_name: judr
     restart: unless-stopped
     env_file: .env

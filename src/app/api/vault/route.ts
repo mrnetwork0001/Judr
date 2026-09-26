@@ -12,6 +12,7 @@ import { joinMessage, verifyJoin, type Role } from "@/lib/identity";
 import { buildRedeem, ESCROW_AGENT, findVault, ixsVaults } from "@/lib/ixs";
 import { sessionFor, withSession } from "@/lib/session";
 import {
+  abortSettlement,
   appeal,
   completeRelease,
   completeReview,
@@ -107,18 +108,33 @@ export async function POST(request: Request) {
 
       case "release": {
         const { payee, amount } = prepareRelease(session.id);
-        if (!escrowConfigured()) return json({ error: "Escrow agent is not configured; there is no wallet to pay from." }, 503);
-        const paid = await payout(payee.address as Address, amount);
-        return json(completeRelease(session.id, paid, await redeemFor(session.id)));
+        try {
+          if (!escrowConfigured()) return json({ error: "Escrow agent is not configured; there is no wallet to pay from." }, 503);
+          const paid = await payout(payee.address as Address, amount);
+          return json(completeRelease(session.id, paid, await redeemFor(session.id)));
+        } catch (error) {
+          abortSettlement(session.id);
+          throw error;
+        } finally {
+          // A refusal above returned without paying; make sure the lock is not left set.
+          if (getVault(session.id).status !== "released") abortSettlement(session.id);
+        }
       }
 
       case "review": {
         if (body.decision !== "uphold" && body.decision !== "overturn") return json({ error: "decision must be uphold or overturn." }, 400);
         const note = String(body.note ?? "").slice(0, 600);
         const { payee, amount } = prepareReview(session.id, body.decision, note, body.by);
-        if (!escrowConfigured()) return json({ error: "Escrow agent is not configured; there is no wallet to pay from." }, 503);
-        const paid = await payout(payee.address as Address, amount);
-        return json(completeReview(session.id, body.decision, note, paid, await redeemFor(session.id)));
+        try {
+          if (!escrowConfigured()) return json({ error: "Escrow agent is not configured; there is no wallet to pay from." }, 503);
+          const paid = await payout(payee.address as Address, amount);
+          return json(completeReview(session.id, body.decision, note, paid, await redeemFor(session.id)));
+        } catch (error) {
+          abortSettlement(session.id);
+          throw error;
+        } finally {
+          if (getVault(session.id).status !== "released") abortSettlement(session.id);
+        }
       }
 
       default:

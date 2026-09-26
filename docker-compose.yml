@@ -5,7 +5,10 @@
 # the app. Without a domain, set DOMAIN=:80 and use http://<server-ip>.
 services:
   judr:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${SITE_URL:-https://${DOMAIN:-localhost}}
     restart: unless-stopped
     env_file: .env
     environment:

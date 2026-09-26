@@ -23,6 +23,7 @@ const {
   prepareReview,
   raiseDispute,
   resetVault,
+  abortSettlement,
   VaultError,
 } = vault;
 
@@ -146,4 +147,18 @@ test("sessions do not share a case", () => {
   assert.equal(getVault(b).status, "funded");
   resetVault(a);
   assert.equal(getVault(b).status, "funded");
+});
+
+test("a payout in flight blocks a second one until it completes or is aborted", async () => {
+  const sid = fresh();
+  joinAs(sid, "plaintiff", CONTRACTOR);
+  raiseDispute(sid, "test");
+  postVerdict(sid, RESULT);
+  await wait(80);
+  prepareRelease(sid);
+  assert.throws(() => prepareRelease(sid), /already in flight/, "second prepare refused while the first is paying");
+  abortSettlement(sid);
+  prepareRelease(sid);
+  completeRelease(sid, PAID);
+  assert.throws(() => prepareRelease(sid), /Already released/);
 });

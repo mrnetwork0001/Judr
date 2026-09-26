@@ -100,6 +100,8 @@ export interface Vault {
   settlement?: Settlement;
   /** The human decision that closed an appeal. */
   review?: Review;
+  /** True while a payout is in flight, so a second call cannot pay again. */
+  settling?: boolean;
 }
 
 export interface Review {
@@ -440,10 +442,12 @@ export function prepareReview(
   if (vault.status !== "appealed" || !vault.verdict) throw new VaultError("Only an appealed verdict can be reviewed.");
   if (!note.trim()) throw new VaultError("A review needs a written reason.");
   if (roleOf(vault, by) !== "reviewer") throw new VaultError("Only a wallet signed in as the reviewer can decide an appeal.");
+  if (vault.settling) throw new VaultError("A payout is already in flight for this case.");
   const upheld = decision === "uphold";
   const winner: Party = upheld ? vault.verdict.winner : vault.verdict.winner === "plaintiff" ? "defendant" : "plaintiff";
   const payee = vault[winner];
   if (!payee.address) throw new VaultError(`${payee.name} has not connected a wallet; the payout has nowhere to go.`);
+  vault.settling = true;
   return { payee, amount: vault.amount };
 }
 
@@ -455,7 +459,9 @@ export function completeReview(
   redeemTx?: UnsignedTx,
 ): Vault {
   const vault = getVault(sessionId);
+  vault.settling = false;
   const { payee } = prepareReview(sessionId, decision, note, vault.participants.find((p: Participant) => p.role === "reviewer")?.address);
+  vault.settling = false;
   const now = Date.now();
   vault.review = { decision, note: note.trim(), at: now, payee };
   vault.status = "released";
@@ -476,6 +482,7 @@ export function completeReview(
 export function prepareRelease(sessionId: string): { payee: PartyRef; amount: number } {
   const vault = getVault(sessionId);
   if (vault.status === "released") throw new VaultError("Already released.");
+  if (vault.settling) throw new VaultError("A payout is already in flight for this case.");
   if (vault.status === "appealed") throw new VaultError("Verdict is under appeal; release is halted.");
   if (vault.status !== "verdict_posted" || !vault.verdict) throw new VaultError("No verdict has been posted for this vault.");
   if (Date.now() < vault.verdict.appealDeadline) throw new VaultError("Appeal window has not closed yet.");
@@ -483,13 +490,21 @@ export function prepareRelease(sessionId: string): { payee: PartyRef; amount: nu
   if (!payee.address) {
     throw new VaultError(`${payee.name} has not connected a wallet; the payout has nowhere to go. Sign in as that party to receive it.`);
   }
+  vault.settling = true;
   return { payee, amount: vault.amount };
+}
+
+/** The transfer failed or was refused: unlock the case so it can be tried again. */
+export function abortSettlement(sessionId: string): void {
+  getVault(sessionId).settling = false;
 }
 
 /** Release, part two: the transfer happened; record it. */
 export function completeRelease(sessionId: string, paid: { txHash: string; explorerUrl: string }, redeemTx?: UnsignedTx): Vault {
   const vault = getVault(sessionId);
+  vault.settling = false;
   const { payee } = prepareRelease(sessionId);
+  vault.settling = false;
   const now = Date.now();
   vault.status = "released";
   vault.releasedTo = payee;
