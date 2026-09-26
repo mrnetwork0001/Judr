@@ -166,7 +166,7 @@ function Settlement({
         <div className="note">
           {s?.payoutTx ? (
             <>
-              <strong>{s.display.payout} {vault.asset}</strong> paid on Base Sepolia to {vault.releasedTo?.name} -{" "}
+              <strong>{s.display.payout} {vault.asset}</strong> paid on {vault.funding?.network === "base" ? "Base" : "Base Sepolia"} to {vault.releasedTo?.name} -{" "}
               <span className="mono">{vault.releasedTo?.address}</span>.{" "}
               <a href={s.payoutUrl} target="_blank" rel="noreferrer">View the transaction ↗</a>
             </>

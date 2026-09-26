@@ -58,7 +58,7 @@ export interface Participant {
 }
 
 export interface Funding {
-  /** The escrow agent's address on Base Sepolia. */
+  /** The escrow agent's address on the configured Base network. */
   agent: string;
   network: string;
   explorerUrl: string;
