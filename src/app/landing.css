@@ -242,6 +242,8 @@
   display: none;
   align-items: center;
   gap: 32px;
+  /* Pushes the links to the right edge; the tail after them is empty on desktop. */
+  margin-left: auto;
 }
 
 @media (min-width: 900px) {
@@ -886,15 +888,6 @@
 .footer-col a:hover {
   color: var(--text);
   text-decoration: underline;
-}
-
-.colophon {
-  margin-top: 44px;
-  padding-top: 22px;
-  border-top: 1px solid var(--border);
-  font-size: 12.5px;
-  color: var(--text-faint);
-  max-width: 70ch;
 }
 
 /* ---------------------------------------------------------------- */

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Wordmark } from "./Motif";
 
 /*
- * Wordmark left, section links right, Launch app at the tail. The bar is
- * transparent over the hero and grows a hairline once the page has moved, so
- * the first screen stays uninterrupted.
+ * Wordmark left, section links right, nothing else. Launch app deliberately
+ * lives elsewhere — the hero, the closing band and the footer — so the bar
+ * stays a table of contents. It is transparent over the hero and grows a
+ * hairline once the page has moved, so the first screen stays uninterrupted.
  */
 
 const SECTIONS = [
@@ -50,9 +50,6 @@ export default function LandingNav() {
         </nav>
 
         <div className="nav-tail">
-          <Link className="lp-btn accent sm" href="/app">
-            Launch app
-          </Link>
           <button
             type="button"
             className="menu-btn"
