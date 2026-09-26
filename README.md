@@ -87,6 +87,44 @@ with the caller.
 This is the answer to the obvious objection. Being wrong should cost a delay,
 not somebody's ten thousand dollars.
 
+## Escrow that earns — the IXS integration and the business model
+
+Idle escrow is dead capital. While a dispute is open, Judr's treasury agent
+places the escrow in a licensed real-world-asset yield vault on **IXS**, and
+Judr's fee comes out of the yield — never out of principal, never out of
+either party's pocket. The time the money was stuck pays for the decision.
+
+How it works:
+
+- **Live vault list.** IXS's public API (`api-v2.ixs.finance/vaults`, no
+  auth) gives the vaults, their chain, whether they require a whitelist, and
+  the yield IXS reports (trailing twelve months). For the vault IXS's own SDK
+  knows, total assets and share price are read on-chain over Avalanche's
+  public RPC.
+- **A SERV allocation step** sees that list and the expected dispute length
+  and proposes a vault — or proposes holding cash — with its risks stated.
+- **A deterministic policy** accepts or refuses the proposal: a vault that
+  requires a whitelist the escrow agent is not on, a paused vault, a zero
+  rate, or a proposal with no stated risk is refused, and the refusal is
+  written to the vault log. The model proposes; the rule decides.
+- **Transactions are built with `@ixswap1/vault-agent-sdk`** as ERC-7540
+  `requestDeposit` / `requestRedeem` call data and shown in the trail exactly
+  as a signer would send them. Judr holds no key and signs nothing.
+- **At release** the yield accrued over the allocation window is split: a
+  quarter to Judr with a 20 USDC floor that applies only when yield covers
+  it, the rest to the winning party on top of principal.
+
+Worked example at the rate IXS reports today: 10,000 USDC held 32 days at
+3.07% earns 26.91. A quarter of that is 6.73, below the floor, so Judr takes
+20.00 and the winner receives 10,006.91 — principal intact, plus 6.91 the
+escrow would otherwise never have earned. If a window is too short for the
+floor, the fee is whatever was earned and nothing more is owed. The arithmetic is in [`src/lib/yield.ts`](src/lib/yield.ts) and
+tested; the landing page and the app compute it with the same functions.
+
+Beyond the per-dispute fee, the same layer licenses to vault operators and
+escrow platforms as their dispute path — a fixed monthly fee per vault — which
+is where the recurring revenue is.
+
 ## The demo
 
 A freelance web development contract with 10,000 USDC in escrow. The
@@ -131,7 +169,7 @@ A recorded run is never presented as a live one.
 bundle — both for capturing a demo recording hands-free.
 
 ```bash
-npm test          # 37 unit tests, no framework, no build step
+npm test          # 49 unit tests, no framework, no build step
 npm run typecheck
 npm run build
 ```
@@ -159,22 +197,34 @@ serves the recorded run, labelled as such.
 | [`src/lib/graph/schema.ts`](src/lib/graph/schema.ts) | Step schemas and the validator |
 | [`src/lib/serv.ts`](src/lib/serv.ts) | SERV client: schema-bound calls, local re-validation, bounded repair, retry |
 | [`src/lib/guard.ts`](src/lib/guard.ts) | Evidence screening |
-| [`src/lib/vault.ts`](src/lib/vault.ts) | Mock IXS vault — state machine, appeal window, release |
+| [`src/lib/vault.ts`](src/lib/vault.ts) | Escrow vault — state machine, allocation, appeal window, yield-split release |
+| [`src/lib/ixs.ts`](src/lib/ixs.ts) | IXS: live vault list, on-chain reads, unsigned ERC-7540 transactions |
+| [`src/lib/graph/allocate.ts`](src/lib/graph/allocate.ts) | The SERV allocation step and the deterministic policy |
+| [`src/lib/yield.ts`](src/lib/yield.ts) | Yield accrual and the fee split |
 | [`src/lib/fixtures.ts`](src/lib/fixtures.ts) | The demo dispute |
 | [`src/lib/replay.ts`](src/lib/replay.ts) | Recorded run |
 | [`src/app/api/arbitrate/route.ts`](src/app/api/arbitrate/route.ts) | SSE stream of the run |
 
 Next.js 16, React 19, vanilla CSS. No UI framework, no state library, no test
-framework. Two runtime dependencies: Next, and Three.js for the landing page's
-scroll-driven helix — loaded after hydration, landing page only, and the page
-is complete without it.
+framework. Runtime dependencies: Next; Three.js for the landing page's
+scroll-driven helix (loaded after hydration, landing only, and the page is
+complete without it); and IXS's `@ixswap1/vault-agent-sdk` with `viem` for
+vault reads and unsigned transactions.
 
 ## Honest limits
 
-- **The vault is a mock.** It is an in-memory state machine, not a deployed
-  contract. The state machine and the verdict digest are what a real deployment
-  would keep; the storage is not. Wiring it to a live IXS vault is the next
-  step and nothing above depends on it not being done yet.
+- **The escrow itself is a mock.** The vault Judr arbitrates over is an
+  in-memory state machine, not a deployed contract; the state machine and the
+  verdict digest are what a real deployment would keep, the storage is not.
+- **The IXS integration reads live and builds unsigned transactions; it does
+  not sign or broadcast.** Vault list, whitelist status and reported yield
+  come from IXS's API; totals and share price for the Avalanche vault are read
+  on-chain. Subscription and redemption requests are built with IXS's SDK and
+  shown as call data. No escrow agent wallet exists yet, so nothing is sent —
+  and IXS's testnets currently have no public test USDC, so a testnet deposit
+  was not an option in the time available. Yield in the demo accrues at the
+  rate IXS reports, from the recorded allocation date; it is arithmetic over a
+  reported rate, not a claimed position.
 - **The live SERV path has not been run against the real endpoint.** It is
   implemented, and exercised end to end against a mock of the documented API
   in the test suite, but every run shown in this repository is the recorded

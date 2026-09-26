@@ -6,6 +6,7 @@ import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Graph from "@/components/landing/Graph";
 import Safeguards from "@/components/landing/Safeguards";
+import Escrow from "@/components/landing/Escrow";
 import BuiltWith from "@/components/landing/BuiltWith";
 import ClosingCta from "@/components/landing/ClosingCta";
 import Footer from "@/components/landing/Footer";
@@ -15,6 +16,10 @@ export const metadata: Metadata = {
   description:
     "Judr arbitrates disputes over escrowed real-world assets with a bounded reasoning graph on SERV: a verdict with a complete audit trail, and a vault that settles against it after an appeal window.",
 };
+
+// The escrow section reads IXS's vault list; refresh it with the page every
+// ten minutes rather than on every request.
+export const revalidate = 600;
 
 export default function LandingPage() {
   return (
@@ -29,6 +34,7 @@ export default function LandingPage() {
         <HowItWorks />
         <Graph />
         <Safeguards />
+        <Escrow />
         <BuiltWith />
         <ClosingCta />
       </main>

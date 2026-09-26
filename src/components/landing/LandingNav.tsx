@@ -14,6 +14,7 @@ const SECTIONS = [
   { href: "#how", label: "How it works" },
   { href: "#graph", label: "The graph" },
   { href: "#safeguards", label: "Safeguards" },
+  { href: "#escrow", label: "Escrow yield" },
 ];
 
 export default function LandingNav() {

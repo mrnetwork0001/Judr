@@ -29,6 +29,9 @@ export default function Footer() {
               <li>
                 <a href="#safeguards">Safeguards</a>
               </li>
+              <li>
+                <a href="#escrow">Escrow yield</a>
+              </li>
             </ul>
           </nav>
 

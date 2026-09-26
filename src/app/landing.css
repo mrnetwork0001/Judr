@@ -461,6 +461,12 @@
   gap: 48px;
 }
 
+/* Grid items default to min-width:auto and would grow to fit a wide table,
+   pushing the page past the viewport on phones. */
+.split > * {
+  min-width: 0;
+}
+
 @media (min-width: 1000px) {
   .split {
     grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
@@ -1108,4 +1114,96 @@
     font-size: 10px;
     letter-spacing: 0.11em;
   }
+}
+
+/* ---------------------------------------------------------------- */
+/* Escrow yield                                                      */
+/* ---------------------------------------------------------------- */
+
+.worked {
+  background: var(--glass-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 22px;
+  box-shadow: var(--glass-edge-lift);
+  padding: 24px 26px;
+}
+
+.worked-head {
+  margin-bottom: 12px;
+}
+
+.ledger-lg {
+  max-width: none;
+  font-size: 15px;
+}
+
+.ledger-lg dd {
+  font-size: 16px;
+}
+
+.ledger-lg dd.total {
+  font-size: 20px;
+}
+
+.worked-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-faint);
+}
+
+.vault-table-wrap {
+  margin-top: 18px;
+  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 18px;
+  box-shadow: var(--glass-edge);
+}
+
+.vault-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.vault-table caption {
+  caption-side: top;
+  text-align: left;
+  padding: 12px 16px 8px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.vault-table th,
+.vault-table td {
+  padding: 10px 16px;
+  text-align: left;
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.vault-table th {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.vault-table .dim {
+  color: var(--text-faint);
+  font-size: 12px;
 }
