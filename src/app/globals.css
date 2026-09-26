@@ -1748,45 +1748,99 @@ button:disabled {
   font-size: 12px;
 }
 
-/* Phones: the sidebar becomes a top strip. */
+/* Top bar and drawer close: only on phones. */
+.app-topbar {
+  display: none;
+}
+
+.drawer-close {
+  display: none;
+}
+
+.app-backdrop {
+  display: none;
+}
+
+/* Phones: the sidebar becomes a drawer behind a top bar. */
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
   }
-  .app-side {
+  .app-topbar {
     position: sticky;
     top: 0;
-    height: auto;
     z-index: 40;
-    flex-direction: row;
+    display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
-    border-right: none;
+    height: 58px;
+    padding: 0 12px 0 16px;
+    background: linear-gradient(180deg, rgba(246, 246, 249, 0.92), rgba(238, 238, 243, 0.82));
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
     border-bottom: 1px solid var(--border);
-    overflow-x: auto;
+  }
+  .app-topbar .wordmark-app {
+    font-size: 20px;
+  }
+  .app-topbar-page {
+    flex: 1;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .app-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(22, 22, 26, 0.35);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: fade-in 0.2s ease;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .app-side {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    height: 100dvh;
+    width: min(320px, 86vw);
+    z-index: 60;
+    border-right: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(247, 247, 250, 0.98), rgba(240, 240, 245, 0.98));
+    box-shadow: 0 20px 60px rgba(25, 25, 40, 0.18);
+    transform: translateX(-100%);
+    transition: transform 0.24s cubic-bezier(0.2, 0.7, 0.2, 1);
+    overflow-y: auto;
+  }
+  .app-side.open {
+    transform: none;
   }
   .app-brand {
-    padding: 0;
-    flex-shrink: 0;
+    position: relative;
+    padding-right: 40px;
   }
-  .app-tagline {
-    display: none;
-  }
-  .app-nav {
-    flex-direction: row;
-    gap: 4px;
-  }
-  .app-nav-item {
-    padding: 8px 10px;
-    font-size: 13px;
-    white-space: nowrap;
-  }
-  .app-nav-item span:not(.app-nav-icon):not(.app-nav-count):not(.app-nav-dot) {
-    display: none;
-  }
-  .app-side-card {
-    display: none;
+  .drawer-close {
+    display: flex;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--text-dim);
   }
   .app-main {
     padding: 18px 16px 60px;
@@ -1818,6 +1872,12 @@ button:disabled {
   .app-head-actions .btn {
     padding: 8px 14px;
     font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-side {
+    transition: none;
   }
 }
 
@@ -1863,4 +1923,108 @@ button:disabled {
   color: var(--bad);
   font-size: 11.5px;
   line-height: 1.4;
+}
+
+/* The app's own copy of the menu toggle (the landing page defines its own). */
+.app-topbar .menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------- */
+/* Sidebar status card — labelled rows                               */
+/* ---------------------------------------------------------------- */
+
+.app-side-card {
+  gap: 0;
+  padding: 4px 14px 14px;
+}
+
+.status-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 3px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.status-row:first-child {
+  border-top: none;
+}
+
+.status-k {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.status-v {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: end;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+a.status-v:hover {
+  text-decoration: underline;
+}
+
+.status-v.ok { color: var(--ok); }
+.status-v.bad { color: var(--bad); }
+.status-v.dim { color: var(--text-faint); }
+
+.status-n {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-faint);
+  word-break: break-word;
+}
+
+.status-n.err,
+.status-n .err {
+  color: var(--bad);
+}
+
+.status-join {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.status-join .wallet-role {
+  flex: 1;
+  min-width: 140px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.status-row .btn.small {
+  justify-self: end;
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+
+.btn.block {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  text-align: center;
 }

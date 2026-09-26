@@ -6,7 +6,7 @@ Judr resolves disputes over escrowed real-world-asset vaults. Evidence goes in,
 a verdict with a complete audit trail comes out, and the vault settles against
 it — after an appeal window, never on a model's say-so.
 
-**Live demo:** _deploy URL goes here_ · **Video:** [docs/demo.mp4](docs/demo.mp4)
+**Live demo:** [judr.38.49.216.120.sslip.io](https://judr.38.49.216.120.sslip.io) · **Video:** [docs/demo.mp4](docs/demo.mp4)
 
 ![Judr arbitrating a dispute live on SERV: evidence screened, a tampered document quarantined, seven typed steps, a verdict with derived confidence and its price](docs/demo.gif)
 

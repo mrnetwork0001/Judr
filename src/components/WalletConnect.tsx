@@ -119,8 +119,57 @@ export default function WalletConnect({
 
   const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
+  if (compact) {
+    if (!available) {
+      return (
+        <>
+          <span className="status-v dim">none detected</span>
+          <span className="status-n">Install MetaMask or Coinbase Wallet to join as a party.</span>
+        </>
+      );
+    }
+    if (me) {
+      return (
+        <>
+          <span className="status-v ok"><span className="dot" /> {ROLE_LABEL[me.role]}</span>
+          <span className="status-n mono">{short(me.address)} · proven by signature</span>
+        </>
+      );
+    }
+    if (!address) {
+      return (
+        <>
+          <button className="btn small" onClick={() => void connect()} disabled={busy}>
+            {busy ? "Connecting…" : "Connect"}
+          </button>
+          <span className="status-n">Sign in as a party to appeal or be paid.</span>
+          {error && <span className="status-n err">{error}</span>}
+        </>
+      );
+    }
+    return (
+      <>
+        <span className="status-v mono">{short(address)}</span>
+        <span className="status-n status-join">
+          {chainOk === false && (
+            <button className="btn small" onClick={() => void switchChain()}>Switch to {CHAIN.name}</button>
+          )}
+          <select className="wallet-role" value={role} onChange={(e) => setRole(e.target.value as Role)} disabled={busy}>
+            {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
+              <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+            ))}
+          </select>
+          <button className="btn primary small" onClick={() => void join()} disabled={busy}>
+            {busy ? "Signing…" : "Sign to join"}
+          </button>
+          {error && <span className="err">{error}</span>}
+        </span>
+      </>
+    );
+  }
+
   if (!available) {
-    return compact ? null : (
+    return (
       <div className="wallet">
         <span className="badge">no wallet detected</span>
         <p>Install a browser wallet (MetaMask, Coinbase Wallet) to join the case as a party. Payouts go to the winner&rsquo;s proven address.</p>
@@ -133,7 +182,7 @@ export default function WalletConnect({
       <div className="wallet">
         <span className="badge ok"><span className="dot" /> {ROLE_LABEL[me.role]}</span>
         <p className="mono">{short(me.address)}</p>
-        {!compact && <p>Proven by signature. Appeals are accepted only from the losing party&rsquo;s address; the payout goes to the winner&rsquo;s.</p>}
+        <p>Proven by signature. Appeals are accepted only from the losing party&rsquo;s address; the payout goes to the winner&rsquo;s.</p>
       </div>
     );
   }
@@ -145,7 +194,7 @@ export default function WalletConnect({
           <button className="btn small" onClick={() => void connect()} disabled={busy}>
             {busy ? "Connecting…" : "Connect wallet"}
           </button>
-          {!compact && <p>Join the case as a party. The wallet signs a message; it never sends a transaction.</p>}
+          <p>Join the case as a party. The wallet signs a message; it never sends a transaction.</p>
         </>
       ) : (
         <>

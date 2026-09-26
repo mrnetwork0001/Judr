@@ -57,7 +57,6 @@ export default function Dashboard({
   const [error, setError] = useState<string | null>(null);
   const [poisoned, setPoisoned] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [mode, setMode] = useState<"live" | "recorded" | null>(null);
   // The wallet this browser signed in with, learned from the join response.
   const [wallet, setWallet] = useState<string | null>(null);
   const onVaultWithWallet = (v: Vault) => {
@@ -79,10 +78,31 @@ export default function Dashboard({
     window.addEventListener("hashchange", read);
     return () => window.removeEventListener("hashchange", read);
   }, []);
+  // On phones the sidebar is a drawer. It closes on navigation, on Escape,
+  // and when the viewport grows back to desktop, so it can never be stuck open.
+  const [menuOpen, setMenuOpen] = useState(false);
   const go = useCallback((next: Page) => {
     window.location.hash = next;
     setPage(next);
+    setMenuOpen(false);
   }, []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    const onResize = () => {
+      if (window.innerWidth > 900) setMenuOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [menuOpen]);
 
   const abortRef = useRef<AbortController | null>(null);
   // A visitor's own case, shown in the rail while it runs. Cleared on reset.
@@ -94,10 +114,7 @@ export default function Dashboard({
   const handleEvent = useCallback((event: ArbitrationEvent) => {
     switch (event.type) {
       case "step_started": {
-        if (event.step === "mode") {
-          setMode(event.label.startsWith("Live") ? "live" : "recorded");
-          return;
-        }
+        if (event.step === "mode") return;
         setSteps((prev) => [
           ...prev,
           {
@@ -167,7 +184,6 @@ export default function Dashboard({
     setFlags([]);
     setResult(null);
     setError(null);
-    setMode(null);
     setRunning(true);
 
     try {
@@ -277,7 +293,6 @@ export default function Dashboard({
     setFlags([]);
     setResult(null);
     setError(null);
-    setMode(null);
     setCustomDisplay(null);
     await vaultAction("reset");
   }, [vaultAction]);
@@ -306,12 +321,38 @@ export default function Dashboard({
 
   return (
     <div className="app-shell">
-      <aside className="app-side">
+      <header className="app-topbar">
+        <Link href="/" className="wordmark-app">
+          <span className="mark">⚖</span> Judr
+        </Link>
+        <span className="app-topbar-page">{PAGES.find((p) => p.id === page)?.label}</span>
+        <button
+          type="button"
+          className="menu-btn"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Open menu"
+          aria-expanded={menuOpen}
+          aria-controls="app-drawer"
+        >
+          <svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+            <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </button>
+      </header>
+
+      {menuOpen && <div className="app-backdrop" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
+
+      <aside id="app-drawer" className={`app-side ${menuOpen ? "open" : ""}`}>
         <div className="app-brand">
           <Link href="/" className="wordmark-app">
             <span className="mark">⚖</span> Judr
           </Link>
           <div className="app-tagline">Arbitration for escrowed RWAs</div>
+          <button type="button" className="drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+            <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+              <path d="M12 4 6 10l6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
 
         <nav className="app-nav" aria-label="App">
@@ -333,25 +374,34 @@ export default function Dashboard({
         </nav>
 
         <div className="app-side-card">
-          <WalletConnect vault={vault} onVault={onVaultWithWallet} chain={escrow.chain} compact />
-          <div className="side-agent">
-            <span className={`badge ${escrow.configured && !escrow.error ? "live" : "alert"}`}>
-              {escrow.configured && !escrow.error ? `escrow agent · ${escrow.chain.name}` : "escrow agent not configured"}
-            </span>
-            {escrow.address && (
-              <p className="mono">
-                <a href={`${escrow.explorer}/address/${escrow.address}`} target="_blank" rel="noreferrer">
-                  {escrow.address.slice(0, 6)}…{escrow.address.slice(-4)}
-                </a>
-                {escrow.usdc !== undefined && ` · ${Number(escrow.usdc).toFixed(2)} USDC`}
-              </p>
-            )}
-            {escrow.error && <p className="err">{escrow.error}</p>}
+          <div className="status-row">
+            <span className="status-k">Wallet</span>
+            <WalletConnect vault={vault} onVault={onVaultWithWallet} chain={escrow.chain} compact />
           </div>
-          <span className={`badge ${liveCapable ? "live" : "alert"}`}>
-            {mode === "live" || liveCapable ? <><span className={`dot ${running ? "pulse" : ""}`} /> Live · SERV</> : "No SERV key"}
-          </span>
-          <button className="btn small" onClick={reset} disabled={running || busy}>
+          <div className="status-row">
+            <span className="status-k">Escrow agent</span>
+            {escrow.address ? (
+              <a className="status-v mono" href={`${escrow.explorer}/address/${escrow.address}`} target="_blank" rel="noreferrer">
+                {escrow.address.slice(0, 6)}…{escrow.address.slice(-4)}
+              </a>
+            ) : (
+              <span className="status-v bad">not configured</span>
+            )}
+            <span className="status-n">
+              {escrow.error
+                ? escrow.error
+                : escrow.address
+                  ? `${escrow.chain.name}${escrow.usdc !== undefined ? ` · ${Number(escrow.usdc).toFixed(2)} USDC held` : ""}`
+                  : "set the CDP keys to pay out"}
+            </span>
+          </div>
+          <div className="status-row">
+            <span className="status-k">Reasoning</span>
+            <span className={`status-v ${liveCapable ? "ok" : "bad"}`}>
+              <span className={`dot ${running ? "pulse" : ""}`} /> {liveCapable ? "Live · SERV" : "No SERV key"}
+            </span>
+          </div>
+          <button className="btn small block" onClick={reset} disabled={running || busy}>
             Reset case
           </button>
         </div>
