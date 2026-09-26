@@ -16,6 +16,15 @@
  */
 
 import type { ArbitrationResult, Party, PartyRef } from "./types";
+import {
+  INITIAL_ALLOCATION_AT,
+  INITIAL_ALLOCATION_VAULT,
+  INITIAL_DEPOSIT_TX,
+  type IxsVaultSummary,
+  type UnsignedTx,
+} from "./ixs";
+import { RECORDED_DECISION } from "./graph/allocate";
+import { formatMinor, splitYield } from "./yield";
 
 /** A refused transition. The API maps these to 409; anything else is a 500. */
 export class VaultError extends Error {
@@ -59,7 +68,49 @@ export interface Vault {
   };
   releasedTo?: PartyRef;
   events: VaultEvent[];
+  /** Where the escrow sits while the dispute is open. Absent means cash. */
+  allocation?: Allocation;
+  /** Set on release: how principal, yield and fee were divided. */
+  settlement?: Settlement;
 }
+
+export interface Allocation {
+  vaultId: string;
+  name: string;
+  symbol: string;
+  chainName: string;
+  contractAddress: string;
+  explorerUrl: string;
+  /** Annual rate as a fraction, as reported by IXS at allocation time. */
+  rate: number;
+  sharePrice?: number;
+  /** When the escrow was placed. Yield accrues from here. */
+  at: number;
+  rationale: string;
+  /** The subscription request a signer would send. Unsigned. */
+  tx: UnsignedTx;
+  source: "live" | "recorded";
+}
+
+export interface Settlement {
+  days: number;
+  /** All amounts in minor units of the escrow asset, as strings for JSON. */
+  principal: string;
+  yieldEarned: string;
+  fee: string;
+  payout: string;
+  /** Display strings with two decimals. */
+  display: { principal: string; yieldEarned: string; fee: string; payout: string };
+  feeCapped: boolean;
+  /** The redemption request a signer would send. Unsigned. */
+  redeemTx?: UnsignedTx;
+}
+
+/** Judr's fee: a quarter of the yield the escrow earned, with a 20 USDC floor
+ *  that applies only when yield covers it. Principal is never touched. */
+export const FEE_BPS = 2500;
+export const FEE_FLOOR_MINOR = 20_000_000n;
+const ASSET_DECIMALS = 6;
 
 /**
  * Demo appeal window. Long enough to read the verdict and lodge an appeal,
@@ -78,10 +129,109 @@ function freshVault(): Vault {
     plaintiff: { name: "A. Moreau (Contractor)", address: "0xA11CE…4f2b" },
     defendant: { name: "B. Adeyemi (Client)", address: "0xB0B…91d7" },
     status: "funded",
+    allocation: allocationFrom(INITIAL_ALLOCATION_VAULT, RECORDED_DECISION, INITIAL_DEPOSIT_TX, "recorded", INITIAL_ALLOCATION_AT),
     events: [
       { at: Date.parse("2026-08-25T10:04:00Z"), label: "Vault funded", detail: "10,000.00 USDC deposited by B. Adeyemi" },
       { at: Date.parse("2026-08-25T10:04:00Z"), label: "Agreement bound", detail: "Web Development Services Agreement — IXS-VLT-4417" },
+      {
+        at: INITIAL_ALLOCATION_AT,
+        label: "Escrow allocated",
+        detail: `${INITIAL_ALLOCATION_VAULT.name} (${INITIAL_ALLOCATION_VAULT.symbol}) on ${INITIAL_ALLOCATION_VAULT.chainName} · ${(INITIAL_ALLOCATION_VAULT.ttmRate * 100).toFixed(2)}% TTM · recorded decision`,
+      },
     ],
+  };
+}
+
+/**
+ * Records where the escrow sits. Allowed while funded or disputed — the
+ * agent may rebalance while a case is open — but not once a verdict is
+ * posted, because the redemption clock is then already running.
+ */
+export function setAllocation(sessionId: string, allocation: Allocation): Vault {
+  const vault = getVault(sessionId);
+  if (vault.status !== "funded" && vault.status !== "disputed") {
+    throw new VaultError(`Cannot move the escrow while the vault is ${vault.status.replace("_", " ")}.`);
+  }
+  vault.allocation = allocation;
+  vault.events.push({
+    at: allocation.at,
+    label: "Escrow allocated",
+    detail: `${allocation.name} (${allocation.symbol}) on ${allocation.chainName} · ${(allocation.rate * 100).toFixed(2)}% TTM · ${allocation.source === "live" ? "agent decision" : "recorded decision"}`,
+  });
+  return vault;
+}
+
+/**
+ * The agent re-evaluated and chose to stay. The allocation date is kept —
+ * yield has been accruing since the escrow was placed, and a fresh timestamp
+ * would silently discard it — and the decision is written to the log.
+ */
+export function holdAllocation(sessionId: string, rationale: string, source: "live" | "recorded"): Vault {
+  const vault = getVault(sessionId);
+  if (!vault.allocation) throw new VaultError("Nothing is allocated to hold.");
+  if (vault.status !== "funded" && vault.status !== "disputed") {
+    throw new VaultError(`Cannot move the escrow while the vault is ${vault.status.replace("_", " ")}.`);
+  }
+  vault.allocation = { ...vault.allocation, rationale, source };
+  vault.events.push({
+    at: Date.now(),
+    label: "Allocation re-evaluated: hold",
+    detail: `${vault.allocation.symbol} on ${vault.allocation.chainName} kept · ${source === "live" ? "agent decision" : "recorded decision"}`,
+  });
+  return vault;
+}
+
+/** The policy refused the model's proposal. Nothing moves; the refusal is on the record. */
+export function refuseAllocation(sessionId: string, reasons: string[]): Vault {
+  const vault = getVault(sessionId);
+  vault.events.push({
+    at: Date.now(),
+    label: "Allocation refused by policy",
+    detail: reasons.join(" "),
+  });
+  return vault;
+}
+
+export function holdCash(sessionId: string, rationale: string): Vault {
+  const vault = getVault(sessionId);
+  if (vault.status !== "funded" && vault.status !== "disputed") {
+    throw new VaultError(`Cannot move the escrow while the vault is ${vault.status.replace("_", " ")}.`);
+  }
+  vault.allocation = undefined;
+  vault.events.push({ at: Date.now(), label: "Escrow held as cash", detail: rationale });
+  return vault;
+}
+
+/**
+ * How the escrow divides at release. Yield accrues from the allocation date at
+ * the rate IXS reported when the escrow was placed; the fee comes from yield
+ * only. With no allocation there is no yield and no fee.
+ */
+export function computeSettlement(vault: Vault, at: number, redeemTx?: UnsignedTx): Settlement {
+  const principal = BigInt(Math.round(vault.amount * 10 ** ASSET_DECIMALS));
+  const days = vault.allocation ? Math.max(0, Math.floor((at - vault.allocation.at) / 86_400_000)) : 0;
+  const split = splitYield({
+    principal,
+    annualRate: vault.allocation?.rate ?? 0,
+    days,
+    feeBps: FEE_BPS,
+    feeFloor: FEE_FLOOR_MINOR,
+  });
+  const show = (n: bigint) => formatMinor(n, ASSET_DECIMALS);
+  return {
+    days,
+    principal: principal.toString(),
+    yieldEarned: split.yieldEarned.toString(),
+    fee: split.fee.toString(),
+    payout: split.payout.toString(),
+    display: {
+      principal: show(principal),
+      yieldEarned: show(split.yieldEarned),
+      fee: show(split.fee),
+      payout: show(split.payout),
+    },
+    feeCapped: split.feeCapped,
+    ...(redeemTx ? { redeemTx } : {}),
   };
 }
 
@@ -199,7 +349,7 @@ export function appeal(sessionId: string, reason: string): Vault {
 }
 
 /** The transfer. Refuses to run early, or on an appealed verdict. */
-export function release(sessionId: string): Vault {
+export function release(sessionId: string, redeemTx?: UnsignedTx): Vault {
   const vault = getVault(sessionId);
   if (vault.status === "released") return vault;
   if (vault.status === "appealed") {
@@ -212,12 +362,41 @@ export function release(sessionId: string): Vault {
     throw new VaultError("Appeal window has not closed yet.");
   }
 
+  const now = Date.now();
   vault.status = "released";
   vault.releasedTo = vault.verdict.payee;
+  vault.settlement = computeSettlement(vault, now, redeemTx);
+  const s = vault.settlement.display;
   vault.events.push({
-    at: Date.now(),
+    at: now,
     label: "Escrow released",
-    detail: `${vault.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${vault.asset} → ${vault.verdict.payee.name} (${vault.verdict.payee.address})`,
+    detail: vault.allocation
+      ? `${s.principal} principal + ${s.yieldEarned} yield − ${s.fee} Judr fee = ${s.payout} ${vault.asset} → ${vault.verdict.payee.name} (${vault.verdict.payee.address})`
+      : `${s.payout} ${vault.asset} → ${vault.verdict.payee.name} (${vault.verdict.payee.address})`,
   });
   return vault;
+}
+
+/** A thin summary of a vault for the allocation record. */
+export function allocationFrom(
+  vault: IxsVaultSummary,
+  decision: { rationale: string },
+  tx: UnsignedTx,
+  source: "live" | "recorded",
+  at = Date.now(),
+): Allocation {
+  return {
+    vaultId: vault.id,
+    name: vault.name,
+    symbol: vault.symbol,
+    chainName: vault.chainName,
+    contractAddress: vault.contractAddress,
+    explorerUrl: vault.explorerUrl,
+    rate: vault.ttmRate,
+    ...(vault.onchain ? { sharePrice: vault.onchain.sharePrice } : {}),
+    at,
+    rationale: decision.rationale,
+    tx,
+    source,
+  };
 }

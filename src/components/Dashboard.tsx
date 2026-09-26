@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import AllocationPanel from "./AllocationPanel";
 import VaultPanel from "./VaultPanel";
 import VerdictPanel from "./VerdictPanel";
 import type {
@@ -280,6 +281,8 @@ export default function Dashboard({
       <div className="columns">
         <aside className="rail">
           <VaultPanel vault={vault} dispute={activeDispute} result={result} />
+
+          <AllocationPanel vault={vault} onVault={setVault} disabled={running || busy} />
 
           <div className="panel">
             <div className="panel-head">

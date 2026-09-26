@@ -131,11 +131,32 @@ function Settlement({
   const windowOpen = vault.status === "verdict_posted" && remaining > 0;
 
   if (vault.status === "released") {
+    const s = vault.settlement;
     return (
-      <div className="settlement">
+      <div className="settlement settlement-split">
         <div className="note">
           Escrow released to {vault.releasedTo?.name} — {vault.releasedTo?.address}.
           The appeal window closed without challenge.
+          {s && vault.allocation && (
+            <dl className="ledger">
+              <dt>Principal</dt>
+              <dd>{s.display.principal}</dd>
+              <dt>Yield earned · {s.days} days in {vault.allocation.symbol}</dt>
+              <dd>+ {s.display.yieldEarned}</dd>
+              <dt>Judr fee · from yield only{s.feeCapped ? " (capped at yield)" : ""}</dt>
+              <dd>− {s.display.fee}</dd>
+              <dt className="total">Paid to {vault.releasedTo?.name}</dt>
+              <dd className="total">{s.display.payout} {vault.asset}</dd>
+            </dl>
+          )}
+          {s?.redeemTx && (
+            <div className="alloc-tx">
+              <span className="k">unsigned redemption · chain {s.redeemTx.chainId}</span>
+              <code>
+                {s.redeemTx.functionName}({s.redeemTx.args.join(", ")}) → {s.redeemTx.address}
+              </code>
+            </div>
+          )}
         </div>
         <span className="badge ok">
           <span className="dot" /> Settled

@@ -1047,3 +1047,119 @@ button:disabled {
   color: var(--text-faint);
   word-break: break-all;
 }
+
+/* ---------------------------------------------------------------- */
+/* Allocation                                                        */
+/* ---------------------------------------------------------------- */
+
+.alloc-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.alloc-name .mono {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-left: 6px;
+}
+
+.alloc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.alloc-why {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.alloc-tx {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.alloc-tx .k {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 6px;
+}
+
+.alloc-tx code {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  word-break: break-all;
+}
+
+.alloc-tx a {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.alloc-result {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.alloc-result-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.alloc-risks {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.settlement-split .note {
+  max-width: none;
+  flex: 1;
+}
+
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 18px;
+  margin: 12px 0 0;
+  max-width: 480px;
+  font-size: 13px;
+}
+
+.ledger dt {
+  color: var(--text-dim);
+}
+
+.ledger dd {
+  margin: 0;
+  font-family: var(--mono);
+  text-align: right;
+}
+
+.ledger .total {
+  padding-top: 6px;
+  border-top: 1px solid var(--border-strong);
+  color: var(--text);
+  font-weight: 600;
+}

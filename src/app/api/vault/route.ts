@@ -6,6 +6,7 @@
  * the caller. Refused transitions come back as 409 with the reason.
  */
 
+import { buildRedeem, ESCROW_AGENT, findVault, ixsVaults } from "@/lib/ixs";
 import { sessionFor, withSession } from "@/lib/session";
 import { appeal, getVault, release, resetVault, VaultError } from "@/lib/vault";
 
@@ -33,8 +34,22 @@ export async function POST(request: Request) {
           Response.json(appeal(session.id, body.reason ?? "Appeal lodged by the losing party")),
           session,
         );
-      case "release":
-        return withSession(Response.json(release(session.id)), session);
+      case "release": {
+        // The redemption request for wherever the escrow sits. Unsigned; the
+        // shares figure is principal at the share price recorded at allocation.
+        const current = getVault(session.id);
+        let redeemTx;
+        if (current.allocation) {
+          const snapshot = await ixsVaults();
+          const v = findVault(snapshot, current.allocation.vaultId);
+          if (v) {
+            const price = current.allocation.sharePrice ?? v.onchain?.sharePrice ?? 1;
+            const shares = (current.amount / price).toFixed(6);
+            redeemTx = buildRedeem(v, ESCROW_AGENT, shares);
+          }
+        }
+        return withSession(Response.json(release(session.id, redeemTx)), session);
+      }
       default:
         return withSession(Response.json({ error: "Unknown action." }, { status: 400 }), session);
     }
