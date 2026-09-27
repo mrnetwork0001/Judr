@@ -20,7 +20,8 @@ Too small to litigate. Too big to walk away from. That is the gap Judr fills.
 | | |
 |---|---|
 | **Live app** | [tryjudr.vercel.app](https://tryjudr.vercel.app) (origin [judr.38.49.216.120.sslip.io](https://judr.38.49.216.120.sslip.io)) |
-| **Video** | [docs/demo.mp4](docs/demo.mp4) · 2 min 24 s, filmed on the live app, with a real mainnet payout in shot |
+| **Video** | [youtube.com/watch?v=Hu6asFzbr2U](https://www.youtube.com/watch?v=Hu6asFzbr2U) · 2 min 24 s, filmed on the live app, with a real mainnet payout in shot · [docs/demo.mp4](docs/demo.mp4) |
+| **Submission post** | [x.com/encrypt_wizard/status/2104225338360254586](https://x.com/encrypt_wizard/status/2104225338360254586) |
 | **First mainnet settlement** | [0x80234fa7…](https://basescan.org/tx/0x80234fa706823f069f67967cc93fd9916c5e09b45685f422a633c0ca6c473e2b) - 0.10 USDC to the winning party, Base, 27 Sep 2026 |
 | **Standing IXS position** | [0x13718493…](https://snowscan.xyz/tx/0x13718493f700f26c3d3acae254d5a4ff0bf5d76d5193b023feddb797854c4c0c) - 100 USDC requested into the IX High Yield Bond vault on Avalanche, request 10, 27 Sep 2026 |
 | **Cost of a decision** | $0.02 to $0.03 and about 25 seconds on SERV, against $3,000+ and 6 to 12 weeks for a human arbitrator |
