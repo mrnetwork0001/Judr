@@ -13,7 +13,7 @@ const delay = (seconds: number): CSSProperties => ({ animationDelay: `${seconds}
 const ASSURANCES = [
   "Every verdict names the clause that decided it",
   "Confidence is measured across re-runs, never self-reported",
-  "Funds move on-chain only after an appeal window closes unchallenged",
+  "Funds move on-chain only after the appeal window closes, or a reviewer decides",
 ];
 
 /*
@@ -37,7 +37,8 @@ function HeroVignette() {
       </div>
       <FigCaption label="Fig. 1">
         Judr&rsquo;s own interface, telling one story. A. Moreau and B. Adeyemi are a sample
-        case; the reasoning shown is a real decision, made live on SERV and saved as it came back.
+        case; the reasoning shown is a real decision, made live on SERV on 26 September 2026
+        and saved as it came back, timings included.
       </FigCaption>
     </figure>
   );

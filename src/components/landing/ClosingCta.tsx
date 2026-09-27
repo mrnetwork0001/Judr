@@ -9,7 +9,7 @@ export default function ClosingCta() {
         <div>
           <Image className="closing-mark" src="/brand/judr-mark.png" alt="" width={240} height={194} unoptimized />
           <h2 id="closing-title">
-            Watch it decide. <em>It takes about ten seconds.</em>
+            Watch it decide. <em>It takes about half a minute.</em>
           </h2>
           <p className="lead" style={{ marginTop: 20 }}>
             The demo runs a real dispute end to end: seven steps, a verdict that turns on a

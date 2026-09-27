@@ -57,17 +57,17 @@ function Frame({
 
 /** The arbitration feed, caught mid-run. */
 export function FeedSpecimen({ className }: { className?: string }) {
-  const rows = [
-    { label: "Screening evidence", time: "1.2s", state: "done" },
-    { label: "Extracting contract clauses", time: "1.4s", state: "done" },
-    { label: "Identifying what is in dispute", time: "1.3s", state: "done" },
-    { label: "Weighing evidence against each clause", time: "running…", state: "now" },
-    { label: "Adjudicating", time: "", state: "idle" },
-    { label: "Verifying citations", time: "", state: "idle" },
-  ];
+  // The saved run's own steps and durations, pictured as the feed stood after
+  // the third step had returned.
+  const DONE = 3;
+  const rows = RUN.trail.map((record, i) => ({
+    label: record.label,
+    time: i < DONE ? `${((record.endedAt - record.startedAt) / 1000).toFixed(1)}s` : i === DONE ? "running…" : "",
+    state: i < DONE ? "done" : i === DONE ? "now" : "idle",
+  }));
 
   return (
-    <Frame title="Arbitration feed" meta="3 / 6 steps" className={className}>
+    <Frame title="Arbitration feed" meta={`${DONE} / ${rows.length} steps`} className={className}>
       <div className="spec-steps">
         {rows.map((row, i) => (
           <div key={row.label} className={`spec-step ${row.state}`}>

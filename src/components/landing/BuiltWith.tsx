@@ -9,7 +9,7 @@ const STACK = [
   {
     term: "Coinbase AgentKit",
     detail:
-      "The escrow agent. A CDP wallet on Base holds the escrow as real USDC, tops itself up from Coinbase's faucet on testnet, and pays the winning party with an on-chain ERC-20 transfer when a case settles. Payouts are capped per address and per day.",
+      "The escrow agent. A CDP wallet on Base mainnet holds the escrow as real USDC and pays the winning party with an on-chain ERC-20 transfer when a case settles; on testnet it tops itself up from Coinbase's faucet. Payouts are capped per address and per day, and a case is locked while one is in flight.",
   },
   {
     term: "IXS vaults",
@@ -19,7 +19,7 @@ const STACK = [
   {
     term: "Next.js 16 · React 19",
     detail:
-      "Server-streamed arbitration over SSE, vanilla CSS, no UI framework and no state library. Fifty unit tests run on Node's type stripping - no test framework, no build step - including the SERV client against a mock endpoint and the allocation policy against the recorded vault list.",
+      "Server-streamed arbitration over SSE, vanilla CSS, no UI framework and no state library. Fifty-one unit tests run on Node's type stripping - no test framework, no build step - including the SERV client against a mock endpoint and the allocation policy against the recorded vault list.",
   },
 ];
 

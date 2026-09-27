@@ -51,8 +51,11 @@ export default async function Escrow() {
           <p className="lead" style={{ marginTop: 14 }}>
             That is the business model. Nobody pays out of pocket to have a dispute
             decided; the time the money was stuck pays for it. In this build the deposit
-            is built and shown, not sent - the agent is on Base, the vaults are on
-            Avalanche and BSC - so the figures below are a projection at the live rate.
+            is built and shown, not sent. The agent is on Base and the vaults are on
+            Avalanche and BSC, and the vault&rsquo;s own contract forwards a deposit to
+            custody at once, holds a 100 USDC minimum, and leaves finalisation to an IXS
+            operator, hours to days by its history, so a dispute that lasts minutes cannot
+            hold a position. The figures below are a projection at the live rate.
           </p>
         </div>
 
@@ -141,8 +144,9 @@ export default async function Escrow() {
                 <p className="prose">
                   Subscription and redemption requests are built with IXS&rsquo;s own agent
                   SDK as ERC-7540 call data and shown in the trail exactly as a signer
-                  would send them. Judr holds no key. The redemption is requested when the
-                  verdict posts, because the vault operator finalises on its own schedule.
+                  would send them. Judr signs nothing on the vault&rsquo;s chain. The
+                  redemption is requested when the verdict posts, because the vault
+                  operator finalises on its own schedule.
                 </p>
               </div>
             </li>

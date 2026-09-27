@@ -42,8 +42,8 @@ export default function HowItWorks() {
           <Eyebrow>How it works</Eyebrow>
           <h2 id="how-title">From a pile of documents to a decision you can audit.</h2>
           <p className="lead">
-            Four steps. Each one produces typed output that is checked before the next
-            step is allowed to see it.
+            Four stages, seven typed steps in the app. Each one produces output that is
+            checked before the next is allowed to see it.
           </p>
           <MarkRule className="lp-hide-sm" />
         </div>

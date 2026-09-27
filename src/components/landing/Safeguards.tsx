@@ -9,9 +9,9 @@ import { Eyebrow, Numeral } from "./Motif";
 
 const COMMITMENTS = [
   {
-    title: "Judr does not move money",
+    title: "A verdict moves no money by itself",
     body:
-      "A verdict is posted, never executed. It carries a digest over the decision payload and opens an appeal window. The vault itself refuses a release call until that window closes - the check lives with the funds, not with the caller. An appeal halts settlement and escalates to human review, and Judr cannot overrule one.",
+      "A verdict is posted, not executed. It carries a digest over the decision payload and opens an appeal window, and the vault refuses a release call until that window closes - the check lives with the funds, not with the caller. Only then, or after a reviewer decides an appeal, does the escrow agent pay the winner, and the case shows the transaction. An appeal halts settlement and escalates to human review; Judr cannot overrule one.",
   },
   {
     title: "Tampered evidence is quarantined, not cleaned up",
