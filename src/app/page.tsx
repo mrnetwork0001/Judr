@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 // The escrow section reads IXS's vault list; refresh it with the page every
 // ten minutes rather than on every request.
-export const revalidate = 600;
+export const dynamic = "force-dynamic";
 
 export default function LandingPage() {
   return (
