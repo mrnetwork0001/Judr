@@ -12,6 +12,7 @@
  */
 
 import { screenHeuristic } from "@/lib/guard";
+import { Glyph } from "../Glyphs";
 import { POISONED_EVIDENCE } from "@/lib/fixtures";
 import sample from "@/lib/sample-run.json";
 import type { ArbitrationResult } from "@/lib/types";
@@ -72,7 +73,7 @@ export function FeedSpecimen({ className }: { className?: string }) {
           <div key={row.label} className={`spec-step ${row.state}`}>
             <span className="n">{String(i + 1).padStart(2, "0")}</span>
             <span className="l">{row.label}</span>
-            <span className="t">{row.state === "done" ? `✓ ${row.time}` : row.time}</span>
+            <span className="t">{row.state === "done" ? <><Glyph name="check" className="gi" /> {row.time}</> : row.time}</span>
           </div>
         ))}
       </div>

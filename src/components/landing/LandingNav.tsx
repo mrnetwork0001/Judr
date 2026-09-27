@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Wordmark } from "./Motif";
+import { Glyph } from "../Glyphs";
 
 /*
  * Wordmark left, section links right, nothing else. Launch app deliberately
@@ -59,23 +60,13 @@ export default function LandingNav() {
             aria-controls="landing-menu"
             aria-label={open ? "Close menu" : "Open menu"}
           >
-            <svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
-              {open ? (
-                <path
-                  d="m5 5 10 10M15 5 5 15"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              ) : (
-                <path
-                  d="M3 6h14M3 10h14M3 14h14"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              )}
-            </svg>
+            {open ? (
+              <svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
+                <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <Glyph name="menu" className="menu-glyph" />
+            )}
           </button>
         </div>
       </div>

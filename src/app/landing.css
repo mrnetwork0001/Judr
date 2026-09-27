@@ -86,23 +86,23 @@
 }
 
 /* A hairline that lifts into the scales of the Judr mark. Decorative. */
-.scale-rule {
+.mark-rule {
   display: flex;
   align-items: center;
+  gap: 14px;
   color: var(--border-strong);
 }
 
-.scale-rule span {
+.mark-rule span {
   flex: 1;
   height: 1px;
   background: currentColor;
 }
 
-.scale-rule svg {
-  flex-shrink: 0;
-  width: 56px;
-  height: 28px;
-  margin-inline: 2px;
+.mark-rule svg {
+  width: 18px;
+  height: 18px;
+  color: var(--text-faint);
 }
 
 /* ---------------------------------------------------------------- */

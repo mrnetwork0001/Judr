@@ -5,7 +5,7 @@ import {
   GuardSpecimen,
   SettlementSpecimen,
 } from "./fragments";
-import { Eyebrow, Numeral, ScaleRule } from "./Motif";
+import { Eyebrow, Numeral, MarkRule } from "./Motif";
 
 const STEPS: ReadonlyArray<{ title: string; body: string; specimen: ReactNode }> = [
   {
@@ -45,7 +45,7 @@ export default function HowItWorks() {
             Four steps. Each one produces typed output that is checked before the next
             step is allowed to see it.
           </p>
-          <ScaleRule className="lp-hide-sm" />
+          <MarkRule className="lp-hide-sm" />
         </div>
 
         <ol className="steps">

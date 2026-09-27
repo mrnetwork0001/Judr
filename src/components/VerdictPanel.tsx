@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Glyph } from "./Glyphs";
 import type { ArbitrationResult, Clause } from "@/lib/types";
 import type { Vault } from "@/lib/vault";
 
@@ -168,7 +169,7 @@ function Settlement({
             <>
               <strong>{s.display.payout} {vault.asset}</strong> paid on {vault.funding?.network === "base" ? "Base" : "Base Sepolia"} to {vault.releasedTo?.name} -{" "}
               <span className="mono">{vault.releasedTo?.address}</span>.{" "}
-              <a href={s.payoutUrl} target="_blank" rel="noreferrer">View the transaction ↗</a>
+              <a href={s.payoutUrl} target="_blank" rel="noreferrer">View the transaction <Glyph name="external" className="gi" /></a>
             </>
           ) : (
             <>Escrow released to {vault.releasedTo?.name}.</>

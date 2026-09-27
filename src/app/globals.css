@@ -19,6 +19,7 @@
   --text-faint: #66666f;
 
   /* Brass for text and strokes (reads on silver); gold for fills. */
+  --brand: #2a4739;
   --accent: #8a5c0c;
   --accent-fill: #d9a441;
   --accent-dim: #b8873a;
@@ -1462,12 +1463,39 @@ button:disabled {
 }
 
 .app-nav-item.on .app-nav-icon {
-  color: var(--accent);
+  color: var(--text);
 }
 
 .app-nav-icon {
   display: inline-flex;
   color: var(--text-faint);
+}
+
+.app-nav-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.app-nav-item:not(.on) .app-nav-icon .b {
+  fill: currentColor;
+}
+
+/* Judr glyphs used inline in text: sized to the type, sat on the baseline. */
+.gi {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
+
+.menu-glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.chev svg {
+  width: 10px;
+  height: 10px;
+  display: block;
 }
 
 .app-nav-dot {

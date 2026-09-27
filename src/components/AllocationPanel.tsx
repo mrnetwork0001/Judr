@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Glyph } from "./Glyphs";
 import type { Vault } from "@/lib/vault";
 
 interface AllocateResponse {
@@ -80,7 +81,7 @@ export default function AllocationPanel({
                 {a.tx.functionName}({a.tx.args.join(", ")}) → {a.tx.address}
               </code>
               <a href={`${a.explorerUrl}/address/${a.contractAddress}`} target="_blank" rel="noreferrer">
-                vault on explorer ↗
+                vault on explorer <Glyph name="external" className="gi" />
               </a>
             </div>
           </>

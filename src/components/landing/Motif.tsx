@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Glyph } from "../Glyphs";
 
 /*
  * The small hand-set details that make the landing page Judr's own: the scales
@@ -39,70 +40,26 @@ export function FigCaption({ label, children }: { label: string; children: React
  * rather than tipped, because the claim is that the decision is reached rather
  * than assumed.
  */
-export function ScaleRule({ className }: { className?: string }) {
+export function MarkRule({ className }: { className?: string }) {
   return (
-    <div className={`scale-rule ${className ?? ""}`} aria-hidden="true">
+    <div className={`mark-rule ${className ?? ""}`} aria-hidden="true">
       <span />
-      <svg viewBox="0 0 48 24" fill="none">
-        <path
-          d="M12 12h24M24 12v8M20 20h8M12 12v2M36 12v2"
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-        />
-        <path d="M8 14a4 4 0 0 0 8 0Z" fill="var(--accent)" />
-        <path
-          d="M32 14a4 4 0 0 0 8 0Z"
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <Glyph name="mark" />
       <span />
     </div>
   );
 }
 
 export function Check({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="none" aria-hidden="true">
-      <path
-        d="m3 8.5 3.2 3.2L13 5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <Glyph name="check" className={className} />;
 }
 
 export function ArrowDown({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="none" aria-hidden="true">
-      <path
-        d="M8 3v10m0 0 4-4m-4 4-4-4"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <Glyph name="down" className={className} />;
 }
 
 export function ArrowUpRight({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="none" aria-hidden="true">
-      <path
-        d="M5 11 11 5m0 0H6m5 0v5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <Glyph name="external" className={className} />;
 }
 
 export function Wordmark({ href = "/" }: { href?: string }) {

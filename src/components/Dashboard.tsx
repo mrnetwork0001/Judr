@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Glyph } from "./Glyphs";
 import type { IxsSnapshot } from "@/lib/ixs";
 import { accrue, formatMinor } from "@/lib/yield";
 import AllocationPanel from "./AllocationPanel";
@@ -335,9 +336,7 @@ export default function Dashboard({
           aria-expanded={menuOpen}
           aria-controls="app-drawer"
         >
-          <svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
-            <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          </svg>
+          <Glyph name="menu" className="menu-glyph" />
         </button>
       </header>
 
@@ -483,11 +482,11 @@ export default function Dashboard({
                   <ol className="walk">
                     <li>
                       <strong>Run arbitration.</strong> Seven typed steps stream in on the Dispute page and end in a verdict with its price.
-                      <button className="link" onClick={runDisputeFromAnywhere} disabled={running}>Run →</button>
+                      <button className="link" onClick={runDisputeFromAnywhere} disabled={running}>Run <Glyph name="arrow" className="gi" /></button>
                     </li>
                     <li>
                       <strong>Try tampered evidence.</strong> A document with a hidden instruction is caught and quarantined before anything reads it.
-                      <button className="link" onClick={() => { setPoisoned(true); go("dispute"); }} disabled={running}>Set it up →</button>
+                      <button className="link" onClick={() => { setPoisoned(true); go("dispute"); }} disabled={running}>Set it up <Glyph name="arrow" className="gi" /></button>
                     </li>
                     <li>
                       <strong>Sign in with a wallet.</strong> Join as the Client to appeal, as the Reviewer to decide, as the Contractor to be paid - real USDC on {escrow.chain.name}.
@@ -497,7 +496,7 @@ export default function Dashboard({
                     </li>
                     <li>
                       <strong>Bring your own case.</strong> Paste a contract and evidence and get a live decision.
-                      <button className="link" onClick={() => go("custom")}>Open →</button>
+                      <button className="link" onClick={() => go("custom")}>Open <Glyph name="arrow" className="gi" /></button>
                     </li>
                   </ol>
                 </div>
@@ -738,17 +737,17 @@ function StepCard({
         <span className="step-label">{step.label}</span>
         <span className="step-status">
           {step.status === "running" && "running…"}
-          {step.status === "done" && `✓ ${duration}`}
+          {step.status === "done" && <><Glyph name="check" className="gi" /> {duration}</>}
           {step.status === "failed" && "failed"}
         </span>
-        <span className={`chev ${open ? "open" : ""}`}>▶</span>
+        <span className={`chev ${open ? "open" : ""}`}><Glyph name="chevron" /></span>
       </button>
 
       {open && (
         <div className="step-body">
           {step.repairs.map((repair) => (
             <div key={repair.attempt} className="repair-note">
-              ⟲ schema violation - repair {repair.attempt}: {repair.errors[0]}
+              <Glyph name="repair" className="gi" /> schema violation - repair {repair.attempt}: {repair.errors[0]}
             </div>
           ))}
 
@@ -769,7 +768,7 @@ function StepCard({
           {step.record && (
             <div className="step-meta">
               <span className="badge">{step.record.model}</span>
-              <span className="badge">schema ✓</span>
+              <span className="badge">schema <Glyph name="check" className="gi" /></span>
               {step.record.repairs > 0 && (
                 <span className="badge warn">{step.record.repairs} repair(s)</span>
               )}
@@ -854,7 +853,7 @@ function AuditTrail({ result }: { result: ArbitrationResult }) {
                 <td className="num">{record.model}</td>
                 <td className="num">{record.input_digest}</td>
                 <td className="num">
-                  {record.validated ? "✓" : "✗"}
+                  <Glyph name={record.validated ? "check" : "cross"} className="gi" />
                   {record.repairs > 0 && ` (${record.repairs}r)`}
                 </td>
                 <td className="num">
@@ -903,12 +902,12 @@ function displayBundle(input: CustomDisputeInput, vaultId: string): DisputeBundl
 type Page = "overview" | "dispute" | "evidence" | "escrow" | "audit" | "custom";
 
 const PAGES: Array<{ id: Page; label: string; title: string; subtitle: string; icon: React.ReactNode }> = [
-  { id: "overview", label: "Overview", title: "Overview", subtitle: "The escrow, where it sits, and what has been decided.", icon: <Icon d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" /> },
-  { id: "dispute", label: "Dispute", title: "Dispute", subtitle: "The case, the reasoning as it streams, and the verdict.", icon: <Icon d="M12 3v18M7.5 21h9M4 7.5h16M4 7.5l-2.5 6a3 3 0 0 0 5 0zM20 7.5l2.5 6a3 3 0 0 1-5 0z" /> },
-  { id: "evidence", label: "Evidence", title: "Evidence", subtitle: "Every document, and what the screening found in it.", icon: <Icon d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6" /> },
-  { id: "escrow", label: "Escrow", title: "Escrow", subtitle: "Where the money sits while the dispute is open, and how it settles.", icon: <Icon d="M3 10h18M5 10V7l7-4 7 4v3M5 10v9h14v-9M10 14h4" /> },
-  { id: "audit", label: "Audit", title: "Audit trail", subtitle: "What ran, what it cost, and the digest the vault settles against.", icon: <Icon d="M4 5h16v14H4zM8 9h8M8 13h5M15 13l2 2 3-3" /> },
-  { id: "custom", label: "Your case", title: "Bring your own dispute", subtitle: "Paste a contract and evidence; Judr decides it live.", icon: <Icon d="M12 5v14M5 12h14" /> },
+  { id: "overview", label: "Overview", title: "Overview", subtitle: "The escrow, where it sits, and what has been decided.", icon: <Glyph name="mark" /> },
+  { id: "dispute", label: "Dispute", title: "Dispute", subtitle: "The case, the reasoning as it streams, and the verdict.", icon: <Glyph name="dispute" /> },
+  { id: "evidence", label: "Evidence", title: "Evidence", subtitle: "Every document, and what the screening found in it.", icon: <Glyph name="evidence" /> },
+  { id: "escrow", label: "Escrow", title: "Escrow", subtitle: "Where the money sits while the dispute is open, and how it settles.", icon: <Glyph name="escrow" /> },
+  { id: "audit", label: "Audit", title: "Audit trail", subtitle: "What ran, what it cost, and the digest the vault settles against.", icon: <Glyph name="audit" /> },
+  { id: "custom", label: "Your case", title: "Bring your own dispute", subtitle: "Paste a contract and evidence; Judr decides it live.", icon: <Glyph name="custom" /> },
 ];
 
 const STATUS_LABEL: Record<Vault["status"], string> = {
@@ -918,14 +917,6 @@ const STATUS_LABEL: Record<Vault["status"], string> = {
   released: "released",
   appealed: "under appeal",
 };
-
-function Icon({ d }: { d: string }) {
-  return (
-    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d={d} />
-    </svg>
-  );
-}
 
 function StatTile({ label, value, unit, caption, tone }: { label: string; value: string; unit?: string; caption: string; tone?: "ok" | "bad" | "warn" }) {
   return (
