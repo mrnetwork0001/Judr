@@ -291,6 +291,10 @@
 
 .lp-menu {
   border-top: 1px solid var(--border);
+  /* Opaque on purpose: the pill is glass, and the hero would otherwise
+     show through the links on phones that skip backdrop blur. */
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 0 0 18px 18px;
 }
 
 @media (min-width: 900px) {
