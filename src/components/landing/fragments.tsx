@@ -55,25 +55,41 @@ function Frame({
   );
 }
 
-/** The arbitration feed, caught mid-run. */
-export function FeedSpecimen({ className }: { className?: string }) {
-  // The saved run's own steps and durations, pictured as the feed stood after
-  // the third step had returned.
-  const DONE = 3;
+/** A veil over a specimen's body while the step that produces it is still running. */
+function Veil({ on, label, children }: { on: boolean; label: string; children: React.ReactNode }) {
+  return (
+    <div className={`spec-veil ${on ? "on" : ""}`}>
+      <div className="spec-veil-body">{children}</div>
+      <div className="spec-veil-label">
+        <span className="spec-caret" />
+        {label}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The arbitration feed, caught mid-run: the saved run's own steps and their
+ * real durations, with `done` of them returned and the next one running.
+ */
+export function FeedSpecimen({ className, done = 3 }: { className?: string; done?: number }) {
   const rows = RUN.trail.map((record, i) => ({
     label: record.label,
-    time: i < DONE ? `${((record.endedAt - record.startedAt) / 1000).toFixed(1)}s` : i === DONE ? "running…" : "",
-    state: i < DONE ? "done" : i === DONE ? "now" : "idle",
+    time: i < done ? `${((record.endedAt - record.startedAt) / 1000).toFixed(1)}s` : "",
+    state: i < done ? "done" : i === done ? "now" : "idle",
   }));
 
   return (
-    <Frame title="Arbitration feed" meta={`${DONE} / ${rows.length} steps`} className={className}>
+    <Frame title="Arbitration feed" meta={`${Math.min(done, rows.length)} / ${rows.length} steps`} className={className}>
       <div className="spec-steps">
         {rows.map((row, i) => (
           <div key={row.label} className={`spec-step ${row.state}`}>
             <span className="n">{String(i + 1).padStart(2, "0")}</span>
             <span className="l">{row.label}</span>
-            <span className="t">{row.state === "done" ? <><Glyph name="check" className="gi" /> {row.time}</> : row.time}</span>
+            <span className="t">
+              {row.state === "done" && <><Glyph name="check" className="gi" /> {row.time}</>}
+              {row.state === "now" && <><span className="spec-caret" /> running</>}
+            </span>
           </div>
         ))}
       </div>
@@ -103,14 +119,15 @@ export function ClauseSpecimen({ className }: { className?: string }) {
 }
 
 /** One clause finding - a decisive one, with both sides recorded. */
-export function FindingSpecimen({ className }: { className?: string }) {
+export function FindingSpecimen({ className, pending = false }: { className?: string; pending?: boolean }) {
   const decisive = new Set(verdict.decisive_clauses);
   const finding = evaluation.findings.find((f) => decisive.has(f.clause_id) && f.finding !== "satisfied")
     ?? evaluation.findings.find((f) => decisive.has(f.clause_id))
     ?? evaluation.findings[0];
 
   return (
-    <Frame title="Clause finding" meta={finding.clause_id} className={className}>
+    <Frame title="Clause finding" meta={pending ? "weighing" : finding.clause_id} className={className}>
+      <Veil on={pending} label="Weighing evidence against each clause">
       <div className="spec-body">
         <div className="finding">
           <div className="finding-head">
@@ -137,6 +154,7 @@ export function FindingSpecimen({ className }: { className?: string }) {
           </div>
         </div>
       </div>
+      </Veil>
     </Frame>
   );
 }
@@ -146,12 +164,13 @@ export function FindingSpecimen({ className }: { className?: string }) {
  * tampered document at render time, so the excerpt shown is the excerpt the
  * product would actually quote.
  */
-export function GuardSpecimen({ className }: { className?: string }) {
+export function GuardSpecimen({ className, pending = false }: { className?: string; pending?: boolean }) {
   const flags = screenHeuristic([POISONED_EVIDENCE]);
   const flag = flags[0];
 
   return (
-    <Frame title="Evidence screening" meta={`${flags.length} flagged`} className={className}>
+    <Frame title="Evidence screening" meta={pending ? "screening" : `${flags.length} flagged`} className={className}>
+      <Veil on={pending} label="Screening evidence before anything reads it">
       <div className="spec-body">
         <div className="guard-flag">
           <div className="gf-head">
@@ -164,12 +183,21 @@ export function GuardSpecimen({ className }: { className?: string }) {
           <blockquote>{flag.excerpt}</blockquote>
         </div>
       </div>
+      </Veil>
     </Frame>
   );
 }
 
-/** The verdict band with the derived confidence strip. */
-export function VerdictSpecimen({ className }: { className?: string }) {
+/**
+ * The verdict band with the derived confidence strip. `stage` follows the run:
+ * 0 deliberating, 1 one adjudication in, 2 all three agreed, 3 verified and
+ * posted. The numbers are the saved run's; the stages only decide when each
+ * one is shown.
+ */
+export function VerdictSpecimen({ className, stage = 3 }: { className?: string; stage?: 0 | 1 | 2 | 3 }) {
+  const runs = RUN.confidence.consensus.runs;
+  const agreed = stage >= 2 ? RUN.confidence.consensus.agreed : stage === 1 ? 1 : 0;
+  const final = stage >= 3;
   return (
     <div className={`specimen spec-verdict ${className ?? ""}`} aria-hidden="true">
       <div className="panel verdict-panel">
@@ -177,31 +205,31 @@ export function VerdictSpecimen({ className }: { className?: string }) {
           <div className="eyebrow" style={{ color: "var(--text-faint)" }}>
             Verdict
           </div>
-          <div className="winner">A. Moreau (Contractor)</div>
+          <div className={`winner ${final ? "" : "dim"}`}>{final ? "A. Moreau (Contractor)" : "Deliberating"}</div>
         </div>
         <div className="confidence">
           <div className="conf-cell">
             <div className="k">Confidence</div>
-            <div className="v ok">{(RUN.confidence.score * 100).toFixed(0)}%</div>
+            <div className={`v ${final ? "ok" : "dim"}`}>{final ? `${(RUN.confidence.score * 100).toFixed(0)}%` : "pending"}</div>
             <div className="n">stability × citations</div>
           </div>
           <div className="conf-cell">
             <div className="k">Stability</div>
-            <div className="v">{RUN.confidence.consensus.agreed}/{RUN.confidence.consensus.runs}</div>
+            <div className={`v ${stage >= 1 ? "" : "dim"}`}>{agreed}/{runs}</div>
             <div className="n">runs agreed</div>
           </div>
           <div className="conf-cell">
             <div className="k">Cost</div>
-            <div className="v">${RUN.cost.usd.toFixed(2)}</div>
-            <div className="n">{RUN.cost.seconds}s · live on SERV</div>
+            <div className={`v ${final ? "" : "dim"}`}>{final ? `$${RUN.cost.usd.toFixed(2)}` : "metering"}</div>
+            <div className="n">{final ? `${RUN.cost.seconds}s · live on SERV` : "live on SERV"}</div>
           </div>
           <div className="conf-cell">
             <div className="k">Citations</div>
-            <div className={`v ${RUN.verification.passed ? "ok" : "bad"}`}>{RUN.verification.passed ? "valid" : "failed"}</div>
+            <div className={`v ${final ? (RUN.verification.passed ? "ok" : "bad") : "dim"}`}>{final ? (RUN.verification.passed ? "valid" : "failed") : "unverified"}</div>
             <div className="n">every id resolves</div>
           </div>
         </div>
-        <div className="panel-body" style={{ paddingBlock: 14 }}>
+        <div className="panel-body" style={{ paddingBlock: 14, opacity: final ? 1 : 0.35, transition: "opacity 0.4s" }}>
           <div className="decisive" style={{ marginTop: 0, paddingTop: 0, borderTop: "none" }}>
             <span className="badge">Decisive</span>
             {verdict.decisive_clauses.map((id) => (

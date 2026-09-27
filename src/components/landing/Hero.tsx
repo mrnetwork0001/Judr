@@ -1,11 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import {
-  FeedSpecimen,
-  FindingSpecimen,
-  GuardSpecimen,
-  VerdictSpecimen,
-} from "./fragments";
+import HeroLive from "./HeroLive";
 import { ArrowDown, Check, Eyebrow, FigCaption } from "./Motif";
 
 const delay = (seconds: number): CSSProperties => ({ animationDelay: `${seconds}s` });
@@ -25,16 +20,7 @@ const ASSURANCES = [
 function HeroVignette() {
   return (
     <figure className="vignette">
-      <div className="vignette-grid">
-        <div className="vignette-col">
-          <GuardSpecimen className="rise tilt-a" />
-          <FindingSpecimen className="rise tilt-b" />
-        </div>
-        <div className="vignette-col offset">
-          <FeedSpecimen className="rise tilt-c" />
-          <VerdictSpecimen className="rise tilt-d" />
-        </div>
-      </div>
+      <HeroLive />
       <FigCaption label="Fig. 1">
         Judr&rsquo;s own interface, telling one story. A. Moreau and B. Adeyemi are a sample
         case; the reasoning shown is a real decision, made live on SERV on 26 September 2026

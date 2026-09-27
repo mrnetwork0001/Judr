@@ -585,6 +585,99 @@
   .tilt-d { --tilt: -1deg; margin-left: -16px; }
 }
 
+/* The live vignette: the cards drift, lean away from the pointer, and
+   replay the saved run under a veil that lifts as each step returns. */
+.float {
+  animation: float var(--fd, 9s) ease-in-out infinite;
+  animation-delay: var(--fo, 0s);
+}
+
+.f1 { --fd: 9.5s; }
+.f2 { --fd: 11s; --fo: -3s; }
+.f3 { --fd: 8.5s; --fo: -5s; }
+.f4 { --fd: 10.5s; --fo: -1.5s; }
+
+@keyframes float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -7px, 0); }
+}
+
+.vignette-live .vignette-col {
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform: translate3d(calc(var(--px, 0) * 7px), calc(var(--py, 0) * 5px), 0);
+}
+
+.vignette-live .vignette-col.offset {
+  transform: translate3d(calc(var(--px, 0) * -9px), calc(var(--py, 0) * -6px), 0);
+}
+
+.specimen .panel {
+  transition: opacity 0.45s ease;
+}
+
+.vignette-live.resetting .specimen .panel {
+  opacity: 0.3;
+}
+
+.spec-veil {
+  position: relative;
+}
+
+.spec-veil-body {
+  transition: opacity 0.5s ease, filter 0.5s ease;
+}
+
+.spec-veil.on .spec-veil-body {
+  opacity: 0.16;
+  filter: blur(2px);
+}
+
+.spec-veil-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-faint);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.spec-veil.on .spec-veil-label {
+  opacity: 1;
+}
+
+.spec-caret {
+  display: inline-block;
+  width: 5px;
+  height: 10px;
+  background: var(--brand);
+  vertical-align: -1px;
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to { visibility: hidden; }
+}
+
+.spec-verdict .winner.dim,
+.spec-verdict .conf-cell .v.dim {
+  color: var(--text-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float { animation: none; }
+  .vignette-live .vignette-col { transform: none !important; }
+  .spec-caret { animation: none; }
+}
+
 /* ---------------------------------------------------------------- */
 /* Steps                                                             */
 /* ---------------------------------------------------------------- */
