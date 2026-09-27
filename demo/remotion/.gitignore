@@ -1,0 +1,8 @@
+node_modules
+out
+clips/tmp
+public/clips
+public/vo
+src/vo
+src/clips.json
+.env

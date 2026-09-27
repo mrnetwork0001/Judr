@@ -1,0 +1,92 @@
+{
+ "vo": {
+  "v00": {
+   "file": "vo/v00.mp3",
+   "duration": 4.829751
+  },
+  "v01": {
+   "file": "vo/v01.mp3",
+   "duration": 13.606893
+  },
+  "v02": {
+   "file": "vo/v02.mp3",
+   "duration": 18.901043
+  },
+  "v03": {
+   "file": "vo/v03.mp3",
+   "duration": 14.814331
+  },
+  "v04": {
+   "file": "vo/v04.mp3",
+   "duration": 12.399456
+  },
+  "v05": {
+   "file": "vo/v05.mp3",
+   "duration": 15.13941
+  },
+  "v06": {
+   "file": "vo/v06.mp3",
+   "duration": 5.944308
+  },
+  "v07": {
+   "file": "vo/v07.mp3",
+   "duration": 19.458322
+  },
+  "v08": {
+   "file": "vo/v08.mp3",
+   "duration": 6.873107
+  },
+  "v09": {
+   "file": "vo/v09.mp3",
+   "duration": 9.241542
+  },
+  "v10": {
+   "file": "vo/v10.mp3",
+   "duration": 8.126984
+  }
+ },
+ "clips": {
+  "case": {
+   "file": "clips/case.mp4",
+   "duration": 58.133333,
+   "width": 3200,
+   "height": 1800
+  },
+  "custom": {
+   "file": "clips/custom.mp4",
+   "duration": 29.166667,
+   "width": 3200,
+   "height": 1800
+  },
+  "escrow": {
+   "file": "clips/escrow.mp4",
+   "duration": 11.4,
+   "width": 3200,
+   "height": 1800
+  },
+  "explorer": {
+   "file": "clips/explorer.mp4",
+   "duration": 7.3,
+   "width": 3200,
+   "height": 1800
+  },
+  "landing": {
+   "file": "clips/landing.mp4",
+   "duration": 26.033333,
+   "width": 3200,
+   "height": 1800
+  },
+  "poison": {
+   "file": "clips/poison.mp4",
+   "duration": 43.766667,
+   "width": 3200,
+   "height": 1800
+  },
+  "snowscan": {
+   "file": "clips/snowscan.mp4",
+   "duration": 6.3,
+   "width": 3200,
+   "height": 1800
+  }
+ }
+}

@@ -20,13 +20,13 @@ Too small to litigate. Too big to walk away from. That is the gap Judr fills.
 | | |
 |---|---|
 | **Live app** | [tryjudr.vercel.app](https://tryjudr.vercel.app) (origin [judr.38.49.216.120.sslip.io](https://judr.38.49.216.120.sslip.io)) |
-| **Video** | [docs/demo.mp4](docs/demo.mp4) · animated tour below |
+| **Video** | [docs/demo.mp4](docs/demo.mp4) · 2 min 24 s, filmed on the live app, with a real mainnet payout in shot |
 | **First mainnet settlement** | [0x80234fa7…](https://basescan.org/tx/0x80234fa706823f069f67967cc93fd9916c5e09b45685f422a633c0ca6c473e2b) - 0.10 USDC to the winning party, Base, 27 Sep 2026 |
 | **Standing IXS position** | [0x13718493…](https://snowscan.xyz/tx/0x13718493f700f26c3d3acae254d5a4ff0bf5d76d5193b023feddb797854c4c0c) - 100 USDC requested into the IX High Yield Bond vault on Avalanche, request 10, 27 Sep 2026 |
 | **Cost of a decision** | $0.02 to $0.03 and about 25 seconds on SERV, against $3,000+ and 6 to 12 weeks for a human arbitrator |
 | **Nothing simulated** | Live SERV reasoning or no decision at all; real USDC in escrow and in the vault; wallets proven by signature; on-chain payouts with the hash in the case |
 
-![Judr arbitrating a dispute live on SERV: evidence screened, a tampered document quarantined, seven typed steps, a verdict with derived confidence and its price](docs/demo.gif)
+![The demo film: the sample case decided live on SERV, seven typed steps streaming in and a verdict with its price](docs/demo.gif)
 
 ---
 
@@ -489,6 +489,7 @@ pick up the Dockerfile from the repo.
 | [src/app/api/](src/app/api/) | `arbitrate` (SSE), `vault`, `allocate` |
 | [src/components/](src/components/) | The app shell, verdict and review panels, wallet connect, custom dispute, landing page |
 | [scripts/](scripts/) | End-to-end and agent scripts |
+| [demo/remotion/](demo/remotion/) | The demo film: ElevenLabs narration, Playwright captures of the live app with a real wallet, a Remotion edit |
 
 Next.js 16, React 19, vanilla CSS. No UI framework, no state library, no test
 framework. Runtime dependencies: Next, Coinbase AgentKit with the CDP SDK,
