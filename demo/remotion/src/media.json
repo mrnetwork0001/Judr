@@ -2,7 +2,7 @@
  "vo": {
   "v00": {
    "file": "vo/v00.mp3",
-   "duration": 4.829751
+   "duration": 5.01551
   },
   "v01": {
    "file": "vo/v01.mp3",
@@ -10,11 +10,11 @@
   },
   "v02": {
    "file": "vo/v02.mp3",
-   "duration": 18.901043
+   "duration": 20.43356
   },
   "v03": {
    "file": "vo/v03.mp3",
-   "duration": 14.814331
+   "duration": 14.953651
   },
   "v04": {
    "file": "vo/v04.mp3",
@@ -30,19 +30,19 @@
   },
   "v07": {
    "file": "vo/v07.mp3",
-   "duration": 19.458322
+   "duration": 20.48
   },
   "v08": {
    "file": "vo/v08.mp3",
-   "duration": 6.873107
+   "duration": 5.944308
   },
   "v09": {
    "file": "vo/v09.mp3",
-   "duration": 9.241542
+   "duration": 9.055782
   },
   "v10": {
    "file": "vo/v10.mp3",
-   "duration": 8.126984
+   "duration": 6.640907
   }
  },
  "clips": {
@@ -72,7 +72,7 @@
   },
   "landing": {
    "file": "clips/landing.mp4",
-   "duration": 26.033333,
+   "duration": 20.033333,
    "width": 3200,
    "height": 1800
   },

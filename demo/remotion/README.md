@@ -9,7 +9,8 @@ real USDC transfer on Base mainnet, and the IXS position is read from the chain.
 
 | Stage | Command | What it does |
 |---|---|---|
-| Narration | `npm run vo` | Eleven lines to ElevenLabs with word timestamps, written to `public/vo/` and `src/vo/`. The key is read from an env file outside this repo, never committed. |
+| Narration | `npm run vo` | Eleven lines to ElevenLabs with word timestamps, written to `public/vo/` and `src/vo/`. Two words are respelled for the voice only: "lyve" so that live is said as in alive. The key is read from an env file outside this repo, never committed. |
+| Sound | `public/sfx/` | A whoosh for each bar-wipe transition, ticks, a chime and a stamp cued to the narration, and a 150-second music bed, all generated with ElevenLabs' sound and music endpoints. |
 | Wallet | `npm run signer` | Makes a throwaway key for the film and writes its address to `clips/tmp/`. Signing happens inside the capture through a Playwright binding; the key never enters the page. |
 | Capture | `npm run capture` | Drives the live app with Playwright one beat at a time into `public/clips/`, recording where every named element sat and when. `BEAT=case npm run capture` records one beat. |
 | Render | `npm run render` | 1920x1080 H.264 to `out/judr-demo.mp4`, then loudness to -14 LUFS. |

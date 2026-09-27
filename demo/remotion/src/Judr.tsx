@@ -24,7 +24,7 @@ const LEAD = 8
 /** Seconds of air after the voice ends. */
 const TAIL: Record<string, number> = { v00: 1.4, v03: 1.0, v05: 1.2, v06: 1.0, v10: 3.0 }
 const TAIL_DEFAULT = 0.7
-const FADE = 12
+const FADE = 6
 
 type Words = { text: string; words: { w: string; s: number; e: number }[] }
 const VO: Words[] = [v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10]
@@ -50,6 +50,45 @@ const markOr = (clip: string, name: string, rect: [number, number, number, numbe
   try { return mark(clip, name) } catch { return { name, t, rect } }
 }
 const grow = (r: [number, number, number, number], dx: number, dy: number): [number, number, number, number] => [r[0] - dx, r[1] - dy, r[2] + dx * 2, r[3] + dy * 2]
+
+/* -------------------------------------------------------------------- sound */
+
+/** A one-shot sound effect at a frame within the current scene. */
+const Sfx: React.FC<{ name: 'whoosh' | 'tick' | 'chime' | 'rise' | 'stamp'; at: number; volume?: number }> = ({ name, at, volume = 0.35 }) => (
+  <Sequence from={Math.max(0, at)} layout="none">
+    <Audio src={staticFile(`sfx/${name}.mp3`)} volume={volume} />
+  </Sequence>
+)
+
+/**
+ * The transition: the mark's four bars sweep across the frame, the green block
+ * riding the second one, and the next scene is underneath when they clear.
+ * Runs over 20 frames; the scene switch sits at frame 10, under full cover.
+ */
+const WIPE = 20
+const BarWipe: React.FC = () => {
+  const f = useCurrentFrame()
+  const bands = [
+    { top: 0, h: 270, w: 1.6, lag: 0 },
+    { top: 270, h: 270, w: 1.6, lag: 1.5 },
+    { top: 540, h: 270, w: 1.6, lag: 3 },
+    { top: 810, h: 270, w: 1.6, lag: 4.5 },
+  ]
+  return (
+    <AbsoluteFill style={{ pointerEvents: 'none' }}>
+      {bands.map((b, i) => {
+        const p = easeInOut(interpolate(f - b.lag, [0, WIPE - 4.5], [0, 1], CLAMP))
+        const x = -b.w * 1920 + p * (1 + b.w) * 1920
+        return (
+          <div key={i} style={{ position: 'absolute', top: b.top, left: 0, height: b.h, width: b.w * 1920, transform: `translateX(${x}px)`, background: i % 2 ? '#1a1a1f' : TEXT }}>
+            {i === 1 && <div style={{ position: 'absolute', right: 0, top: 30, width: 320, height: b.h - 60, background: BRAND }} />}
+            {i === 2 && <div style={{ position: 'absolute', right: 0, top: 30, width: 320, height: b.h - 60, background: BRAND }} />}
+          </div>
+        )
+      })}
+    </AbsoluteFill>
+  )
+}
 
 /* ------------------------------------------------------------------ layouts */
 
@@ -159,7 +198,7 @@ const S01: React.FC = () => {
   const tArb = cue(1, 'arbitration')
   const tSits = cue(1, 'sits')
   const hero = markOr('landing', 'hero', [810, 166, 598, 1028]).rect
-  const focus: Focus[] = [{ rect: [hero[0] - 20, hero[1] - 10, hero[2] + 40, 700], from: 0.4, to: 99, move: 1.4, maxZoom: 1.5 }]
+  const focus: Focus[] = [{ rect: [hero[0] - 60, hero[1] - 10, hero[2] + 120, 720], from: 0.3, to: 4.0, move: 1.3, maxZoom: 1.3 }]
   const Row: React.FC<{ at: number; who: string; says: string; tone: string }> = ({ at, who, says, tone }) => {
     const lit = interpolate(f, [at - 4, at + 12], [0.3, 1], CLAMP)
     return (
@@ -184,6 +223,9 @@ const S01: React.FC = () => {
           </div>
         }
       >
+        <Sfx name="tick" at={tContractor} />
+        <Sfx name="tick" at={tClient} />
+        <Sfx name="stamp" at={tArb} volume={0.4} />
         <Card delay={cue(1, 'money') + 2} pad={26} width={520}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span style={{ fontFamily: MONO, fontSize: 15, letterSpacing: '0.14em', textTransform: 'uppercase', color: FAINT }}>Escrow · locked</span>
@@ -245,6 +287,15 @@ const S02: React.FC = () => {
           const x2 = X0 + (i + 1) * GAP
           return <line key={n.id} x1={x1} y1={Y} x2={x1 + (x2 - x1) * p} y2={Y} stroke={LINE_2} strokeWidth={2} />
         })}
+        {/* Data moving along each edge once it is drawn. */}
+        {NODES.slice(0, -1).map((n, i) => {
+          const start = cue(2, NODES[i + 1].word) + 10
+          if (f < start) return null
+          const x1 = X0 + i * GAP + 312
+          const x2 = X0 + (i + 1) * GAP
+          const p = ((f - start) % 40) / 40
+          return <rect key={`pk-${n.id}`} x={x1 + (x2 - x1 - 12) * p} y={Y - 3} width={12} height={6} fill={BRAND} opacity={0.9} />
+        })}
         {/* The three adjudications, fanned. */}
         {[-1, 0, 1].map((k) => {
           const at = cue(2, 'three') + 4 + Math.abs(k) * 4
@@ -271,6 +322,8 @@ const S02: React.FC = () => {
         )
       })}
 
+      {NODES.map((n) => <Sfx key={n.id} name="tick" at={cue(2, n.word) - 4} />)}
+      <Sfx name="chime" at={tPosted} volume={0.3} />
       <div style={{ position: 'absolute', left: 110, top: 800, width: 1700, display: 'flex', gap: 14 }}>
         <Chip tone="ok" delay={cue(2, 'weighed') + 8} block>Findings cite evidence by id</Chip>
         <Chip tone="ok" delay={cue(2, 'three') + 10} block>Confidence measured, never self-reported</Chip>
@@ -297,6 +350,9 @@ const S03: React.FC = () => {
   return (
     <>
       <Backdrop />
+      <Sfx name="tick" at={cue(3, 'seven')} />
+      <Sfx name="chime" at={cue(3, 'verdict')} volume={0.3} />
+      <Sfx name="tick" at={cue(3, 'confidence')} />
       <Wide
         step={1}
         eyebrow="Live on SERV"
@@ -306,7 +362,7 @@ const S03: React.FC = () => {
         note={
           <>
             <Chip tone="ok" delay={cue(3, 'confidence')} size={18} block>Confidence measured across re-runs</Chip>
-            <Chip tone="gold" delay={cue(3, 'two')} size={18} mono>about $0.02</Chip>
+            <Chip tone="gold" delay={cue(3, 'cost')} size={18} mono><Count from={0} to={0.023} start={cue(3, 'cost')} dur={26} fmt={(n) => `$${n.toFixed(3)}`} /> per decision</Chip>
           </>
         }
         right={<Credit from={cue(3, 'seven')} name="The sample case" kicker="Decided live" role="A web contract, 10,000 USDC in escrow" logo="openserv" />}
@@ -342,6 +398,9 @@ const S04: React.FC = () => {
   return (
     <>
       <Backdrop />
+      <Sfx name="tick" at={cue(4, 'hidden')} />
+      <Sfx name="stamp" at={cue(4, 'quarantined')} volume={0.45} />
+      <Sfx name="tick" at={cue(4, 'verdict')} />
       <Wide
         step={2}
         eyebrow="Adversarial evidence"
@@ -390,6 +449,9 @@ const S05: React.FC = () => {
   return (
     <>
       <Backdrop />
+      <Sfx name="tick" at={cue(5, 'wallet')} />
+      <Sfx name="tick" at={cue(5, 'refuses')} />
+      <Sfx name="chime" at={cue(5, 'pays') + 20} volume={0.32} />
       <Wide
         step={3}
         eyebrow="Settlement"
@@ -428,6 +490,7 @@ const S06: React.FC = () => {
   return (
     <>
       <Backdrop />
+      <Sfx name="tick" at={cue(6, 'hash')} />
       <Wide
         step={4}
         eyebrow="On chain"
@@ -459,6 +522,10 @@ const S07: React.FC = () => {
   return (
     <>
       <Backdrop />
+      <Sfx name="tick" at={cue(7, 'proposes')} />
+      <Sfx name="tick" at={cue(7, 'policy')} />
+      <Sfx name="chime" at={cue(7, 'holds')} volume={0.28} />
+      <Sfx name="tick" at={cue(7, 'fee')} />
       <Side
         step={5}
         eyebrow="RWA Vaults · with IXS"
@@ -502,6 +569,7 @@ const S08: React.FC = () => {
   return (
     <>
       <Backdrop />
+      <Sfx name="tick" at={cue(8, 'decides')} />
       <Wide
         step={6}
         eyebrow="Your case"
@@ -533,6 +601,8 @@ const S09: React.FC = () => {
         <div style={{ height: 22 }} />
         <Headline lines={['What is underneath.']} delay={6} size={78} />
       </div>
+      {items.map((it) => <Sfx key={it.logo} name="rise" at={cue(9, it.word) - 4} volume={0.4} />)}
+      <Sfx name="tick" at={cue(9, 'nothing')} />
       <div style={{ position: 'absolute', left: 110, top: 380, width: 1700, display: 'flex', gap: 26 }}>
         {items.map((it) => (
           <Card key={it.logo} delay={cue(9, it.word) - 4} pad={34} style={{ flex: 1 }}>
@@ -560,12 +630,13 @@ const S09: React.FC = () => {
 const S10: React.FC = () => {
   const tToo = cue(10, 'too', 0)
   const tToo2 = cue(10, 'too', 1)
-  const tLive = cue(10, 'live')
+  const tLive = cue(10, 'lyve')
   const tUrl = cue(10, 'try')
   return (
     <>
       <Backdrop tone="cover" />
       <InsetFrame delay={2} />
+      <Sfx name="chime" at={tUrl} volume={0.3} />
       <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: -40 }}>
           <Lockup height={120} delay={2} />
@@ -597,8 +668,17 @@ const Scene: React.FC<{ first: boolean; children: React.ReactNode }> = ({ first,
   return <AbsoluteFill style={{ opacity: o }}>{children}</AbsoluteFill>
 }
 
+/** The music bed: in over a second, held low under the voice, out over the last two. */
+const Bed: React.FC = () => (
+  <Audio
+    src={staticFile('sfx/bed.mp3')}
+    volume={(f) => interpolate(f, [0, 30, JUDR_DURATION - 70, JUDR_DURATION - 4], [0, 0.13, 0.13, 0], CLAMP)}
+  />
+)
+
 export const Judr: React.FC = () => (
   <AbsoluteFill style={{ backgroundColor: SILK }}>
+    <Bed />
     {BODIES.map((Body_, i) => (
       <Sequence key={IDS[i]} from={STARTS[i]} durationInFrames={DURS[i] + (i === BODIES.length - 1 ? 0 : FADE)} name={IDS[i]} premountFor={30}>
         <Scene first={i === 0}>
@@ -607,6 +687,12 @@ export const Judr: React.FC = () => (
         <Sequence from={LEAD} layout="none">
           <Audio src={staticFile(`vo/${IDS[i]}.mp3`)} volume={1.6} />
         </Sequence>
+      </Sequence>
+    ))}
+    {STARTS.slice(1).map((s, i) => (
+      <Sequence key={`wipe-${i}`} from={s - WIPE / 2} durationInFrames={WIPE} name={`wipe ${i + 1}`}>
+        <BarWipe />
+        <Audio src={staticFile('sfx/whoosh.mp3')} volume={0.42} />
       </Sequence>
     ))}
     <ProgressRail total={JUDR_DURATION} />

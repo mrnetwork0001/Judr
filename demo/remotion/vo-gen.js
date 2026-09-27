@@ -18,6 +18,8 @@ if (!key) { console.error('No ELEVENLABS_API_KEY found. Set ELEVEN_ENV to an env
 const VOICE = process.env.ELEVENLABS_VOICE || 'CwhRBWXzGAHq8TQ4Fs17'
 const MODEL = 'eleven_multilingual_v2'
 
+// "lyve" is a spelling, not a word: it makes the voice say live as in alive, never
+// as in leave. The on-screen text keeps the real spelling.
 // Every figure spoken here is what the app showed on the day it was filmed: the
 // sample case decided live on SERV for about two cents, a real USDC payout on Base
 // mainnet, and a real 100 USDC position in IXS's vault on Avalanche.
@@ -25,14 +27,14 @@ const SECTIONS = [
   ['00', "Judr. Autonomous arbitration for tokenized real-world-asset escrow."],
   ['01', "Money is locked in escrow against a real obligation. The contractor says the work was delivered. The client says it wasn't. Arbitration costs more than the claim, so the dispute never gets resolved, and the money just sits."],
   ['02', "Judr decides it. Not with one prompt, but with a bounded reasoning graph on SERV. Evidence is screened. Clauses are extracted. Each side is weighed, clause by clause. The adjudication runs three times, and a deterministic verifier checks every citation before anything is posted."],
-  ['03', "Here it is, live. Seven typed steps stream in, and about thirty seconds later there is a verdict. Who wins, which clauses decided it, a confidence measured across re-runs, and what the decision cost. About two cents."],
+  ['03', "Here it is, lyve. Seven typed steps stream in, and about thirty seconds later there is a verdict. Who wins, which clauses decided it, a confidence measured across re-runs, and what the decision cost. About two cents."],
   ['04', "Evidence comes from the parties, so it is treated as hostile. This document carries a hidden instruction to rule for the defendant. It is quarantined before any reasoning step reads it, and the verdict does not move."],
   ['05', "A verdict moves no money by itself. The winner signs in with a wallet. The vault refuses to release until the appeal window closes. Then the escrow agent, a Coinbase AgentKit wallet on Base, pays the winner in real USDC."],
   ['06', "That is a real transaction on Base mainnet. The hash is on the case record, and on Basescan."],
-  ['07', "While a dispute is open, the escrow should not sit idle. The agent reads IXS's live vault list, a SERV step proposes where the money should sit, a policy decides, and the agent holds a real position in IXS's high-yield bond vault on Avalanche. Judr's fee comes out of the yield, never out of principal."],
-  ['08', "Bring your own dispute. Paste a contract and the evidence, and Judr decides it live, screening included."],
-  ['09', "Built on the SERV reasoning API, Coinbase AgentKit, and IXS vaults. Every figure on screen is read live. Nothing is simulated."],
-  ['10', "Judr. Too small to litigate. Too big to walk away from. Live now, at try judr dot vercel dot app."],
+  ['07', "While a dispute is open, the escrow should not sit idle. The agent reads IXS's lyve vault list, a SERV step proposes where the money should sit, a policy decides, and the agent holds a real position in IXS's high-yield bond vault on Avalanche. Judr's fee comes out of the yield, never out of principal."],
+  ['08', "Bring your own dispute. Paste a contract and the evidence, and Judr decides it lyve, screening included."],
+  ['09', "Built on the SERV reasoning API, Coinbase AgentKit, and IXS vaults. Every figure on screen is read lyve. Nothing is simulated."],
+  ['10', "Judr. Too small to litigate. Too big to walk away from. Lyve now, at try judr dot vercel dot app."],
 ]
 
 const AUDIO_DIR = process.env.AUDIO_DIR || 'public/vo'

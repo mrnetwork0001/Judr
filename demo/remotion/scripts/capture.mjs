@@ -208,14 +208,13 @@ const BEATS = {
     await begin()
     await wait(page, 600)
     await mark('hero', page.locator('.vignette').first())
-    await wait(page, 15500)
-    await scrollToSelector(page, '#how', -70, 1700)
-    await wait(page, 2400)
+    await wait(page, 4600)
+    // One slow, continuous read down the page: method, graph, safeguards, escrow.
+    const end = await page.evaluate(() => { const el = document.querySelector('#escrow'); return el ? window.scrollY + el.getBoundingClientRect().top + 420 : document.body.scrollHeight - 900 })
     await mark('how', page.locator('#how').first())
-    await scrollToSelector(page, '#graph', -70, 1700)
-    await wait(page, 2600)
-    await mark('graph', page.locator('#graph').first())
-    await wait(page, 1500)
+    await smoothScroll(page, end, 13000)
+    await mark('escrow', page.locator('#escrow').first())
+    await wait(page, 1800)
   },
 
   /** 03 + 05: the sample case decided live, then the winner signs in and is paid. */
