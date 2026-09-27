@@ -13,7 +13,7 @@ import v09 from './vo/v09.json'
 import v10 from './vo/v10.json'
 import {
   BAD, BRAND, Backdrop, Body, BrowserFrame, CLAMP, Card, Chip, Count, Credit, DIM, Eyebrow, FAINT, Focus, GOLD, Hairline, HeadLine, Headline,
-  LINE, LINE_2, Lockup, MONO, Mark, OK, PAPER, PartnerLogo, ProgressRail, Reveal, Rise, SANS, SERIF, SILK, TEXT, cardStyle, easeInOut, easeOut, hasClip, mark,
+  LINE, LINE_2, Lockup, MONO, Mark, OK, PAPER, PartnerLogo, Reveal, Rise, SANS, SERIF, SILK, TEXT, cardStyle, easeInOut, easeOut, hasClip, mark,
 } from './ui'
 
 /* ------------------------------------------------------------------- timing */
@@ -695,7 +695,6 @@ export const Judr: React.FC = () => (
         <Audio src={staticFile('sfx/whoosh.mp3')} volume={0.42} />
       </Sequence>
     ))}
-    <ProgressRail total={JUDR_DURATION} />
   </AbsoluteFill>
 )
 
