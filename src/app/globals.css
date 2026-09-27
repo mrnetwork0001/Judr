@@ -2058,3 +2058,27 @@ a.status-v:hover {
   margin-top: 12px;
   text-align: center;
 }
+
+/* The agent's standing IXS position, above the vault list. */
+.position-body {
+  border-bottom: 1px solid var(--border);
+}
+
+.position-body .k {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 10px;
+}
+
+.ledger.position dd {
+  font-family: var(--sans);
+  font-size: 13px;
+  text-align: left;
+}
+
+.ledger.position dd.bad {
+  color: var(--bad);
+}

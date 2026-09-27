@@ -1,3 +1,4 @@
+import { readPosition } from "@/lib/ixs-position";
 import { ixsVaults } from "@/lib/ixs";
 import { FEE_BPS, FEE_FLOOR_MINOR } from "@/lib/vault";
 import { formatMinor, splitYield } from "@/lib/yield";
@@ -15,7 +16,7 @@ const EXAMPLE_PRINCIPAL = 10_000_000_000n; // 10,000.00 USDC
 const EXAMPLE_DAYS = 32;
 
 export default async function Escrow() {
-  const snapshot = await ixsVaults();
+  const [snapshot, position] = await Promise.all([ixsVaults(), readPosition()]);
   const rate = snapshot.vaults.find((v) => v.permissionless)?.ttmRate ?? 0.0307;
   const split = splitYield({
     principal: EXAMPLE_PRINCIPAL,
@@ -50,12 +51,13 @@ export default async function Escrow() {
           </p>
           <p className="lead" style={{ marginTop: 14 }}>
             That is the business model. Nobody pays out of pocket to have a dispute
-            decided; the time the money was stuck pays for it. In this build the deposit
-            is built and shown, not sent. The agent is on Base and the vaults are on
-            Avalanche and BSC, and the vault&rsquo;s own contract forwards a deposit to
-            custody at once, holds a 100 USDC minimum, and leaves finalisation to an IXS
-            operator, hours to days by its history, so a dispute that lasts minutes cannot
-            hold a position. The figures below are a projection at the live rate.
+            decided; the time the money was stuck pays for it. A dispute that lasts
+            minutes cannot hold its own position: the vault&rsquo;s contract forwards a
+            deposit to custody at once, holds a 100 USDC minimum, and leaves finalisation
+            to an IXS operator, hours to days by its history. So the agent keeps one
+            standing position in the permissionless Avalanche vault, real USDC signed
+            with the same key that pays winners on Base, and cases account against it.
+            The worked figures below are a projection at the live rate.
           </p>
         </div>
 
@@ -84,6 +86,52 @@ export default async function Escrow() {
             </p>
           </div>
 
+          <div className="worked" style={{ marginTop: 18 }}>
+            <div className="worked-head">
+              <span className="eyebrow" style={{ color: "var(--text-faint)" }}>
+                Standing position · {position.vaultName ?? "IX High Yield Bond (USDC)"} · {position.chain.name}
+              </span>
+            </div>
+            <dl className="ledger ledger-lg">
+              <dt>Status</dt>
+              <dd>
+                {position.error
+                  ? "could not be read"
+                  : position.status === "none"
+                    ? "no position yet"
+                    : position.status === "pending"
+                      ? "requested · awaiting IXS finalisation"
+                      : "finalised · shares held"}
+              </dd>
+              {position.request && (
+                <>
+                  <dt>Requested</dt>
+                  <dd>{position.request.assetsUsdc} USDC</dd>
+                </>
+              )}
+              {Number(position.shares) > 0 && (
+                <>
+                  <dt>Shares at {position.sharePriceUsdc} USDC</dt>
+                  <dd>{Number(position.shares).toFixed(4)}</dd>
+                  <dt className="total">Worth</dt>
+                  <dd className="total">{Number(position.valueUsdc).toFixed(2)} USDC</dd>
+                </>
+              )}
+            </dl>
+            <p className="worked-note">
+              {position.requestUrl ? (
+                <>
+                  The request is on{" "}
+                  <a href={position.requestUrl} target="_blank" rel="noreferrer">
+                    Snowscan
+                  </a>
+                  ; the state above is read from the chain when this page renders.
+                </>
+              ) : (
+                <>The vault takes {position.minDepositUsdc || "100"} USDC per request; the state above is read from the chain when this page renders.</>
+              )}
+            </p>
+          </div>
           <div className="vault-table-wrap">
             <table className="vault-table">
               <caption>

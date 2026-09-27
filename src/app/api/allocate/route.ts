@@ -23,13 +23,16 @@ import {
   VaultError,
 } from "@/lib/vault";
 
+import { readPosition } from "@/lib/ixs-position";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function GET() {
-  // The vault list on its own, for the panel and the landing page.
-  return Response.json(await ixsVaults());
+  // The vault list and the agent's standing position, for the panel.
+  const [snapshot, position] = await Promise.all([ixsVaults(), readPosition()]);
+  return Response.json({ ...snapshot, position });
 }
 
 export async function POST(request: Request) {
@@ -38,8 +41,12 @@ export async function POST(request: Request) {
   if (!hasServKey()) {
     return withSession(Response.json({ error: "SERV_API_KEY is not set; the allocation step runs live on SERV." }, { status: 503 }), session);
   }
-  const snapshot = await ixsVaults();
+  const [snapshot, position] = await Promise.all([ixsVaults(), readPosition()]);
   const startedAt = Date.now();
+  const positionLine =
+    position.status === "none" || position.error
+      ? undefined
+      : `${position.vaultName ?? "IX High Yield Bond (USDC)"} on ${position.chain.name} (${position.vault}): ${position.status === "pending" ? `${position.pendingUsdc || position.request?.assetsUsdc} USDC requested, awaiting IXS finalisation` : `${Number(position.shares).toFixed(4)} shares worth ${Number(position.valueUsdc).toFixed(2)} USDC at ${position.sharePriceUsdc}`}. Cases account against this standing position; no per-case deposit is sent.`;
 
   let decision: AllocationDecision;
   let engine: string;
@@ -49,6 +56,7 @@ export async function POST(request: Request) {
       snapshot,
       escrow: { amount: vault.amount, asset: vault.asset },
       expectedDays: 30,
+      position: positionLine,
       signal: request.signal,
     });
     decision = result.value;

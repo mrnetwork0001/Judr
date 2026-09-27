@@ -102,13 +102,15 @@ export interface AllocateArgs {
   snapshot: IxsSnapshot;
   escrow: { amount: number; asset: string };
   expectedDays: number;
+  /** One line on the position the agent already holds, if any. */
+  position?: string;
   onDelta?: (text: string) => void;
   onRepair?: (attempt: number, errors: string[]) => void;
   signal?: AbortSignal;
 }
 
 export async function allocate(args: AllocateArgs) {
-  const { snapshot, escrow, expectedDays, ...rest } = args;
+  const { snapshot, escrow, expectedDays, position, ...rest } = args;
   return completeTyped<AllocationDecision>({
     schema: ALLOCATION_SCHEMA,
     schemaName: "allocation",
@@ -146,7 +148,7 @@ Rules:
 ${escrow.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${escrow.asset}, expected to remain under dispute for about ${expectedDays} days.
 
 IXS VAULTS (${snapshot.source === "live" ? "live read" : "recorded snapshot"}, ${new Date(snapshot.fetchedAt).toISOString()})
-${renderVaults(snapshot)}`,
+${renderVaults(snapshot)}${position ? `\n\nAGENT'S STANDING POSITION\n${position}` : ""}`,
       },
     ],
   });

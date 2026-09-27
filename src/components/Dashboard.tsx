@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Glyph } from "./Glyphs";
+import type { Position } from "@/lib/ixs-position";
 import type { IxsSnapshot } from "@/lib/ixs";
 import { accrue, formatMinor } from "@/lib/yield";
 import AllocationPanel from "./AllocationPanel";
@@ -932,8 +933,29 @@ function StatTile({ label, value, unit, caption, tone }: { label: string; value:
 }
 
 /** The live IXS list, as the allocation agent sees it. */
+function PositionRows({ p }: { p: Position }) {
+  const statusLabel =
+    p.error ? "could not be read"
+    : p.status === "none" ? "no position yet"
+    : p.status === "pending" ? "requested · awaiting IXS finalisation"
+    : p.status === "claimable" ? "finalised · shares claimable"
+    : "finalised · shares held";
+  return (
+    <dl className="ledger position">
+      <dt>Vault</dt><dd>{p.vaultName ?? "IX High Yield Bond (USDC)"} · {p.chain.name}</dd>
+      <dt>Status</dt><dd className={p.status === "none" ? "dim" : ""}>{statusLabel}</dd>
+      {p.request && (<><dt>Requested</dt><dd>{p.request.assetsUsdc} USDC · {new Date(p.request.requestedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })} · <a href={p.requestUrl ?? undefined} target="_blank" rel="noreferrer">request tx <Glyph name="external" className="gi" /></a></dd></>)}
+      {Number(p.pendingUsdc) > 0 && (<><dt>With IXS custody</dt><dd>{Number(p.pendingUsdc).toFixed(2)} USDC pending</dd></>)}
+      {Number(p.shares) > 0 && (<><dt>Shares</dt><dd>{Number(p.shares).toFixed(4)} at {p.sharePriceUsdc} USDC · worth {Number(p.valueUsdc).toFixed(2)} USDC</dd></>)}
+      {p.status === "none" && !p.error && (<><dt>Minimum</dt><dd className="dim">{p.minDepositUsdc} USDC per request, set by the vault</dd></>)}
+      <dt>Vault total</dt><dd className="dim">{Number(p.totalAssetsUsdc).toLocaleString("en-US", { maximumFractionDigits: 2 })} USDC · <a href={p.explorerUrl} target="_blank" rel="noreferrer">contract <Glyph name="external" className="gi" /></a></dd>
+      {p.error && (<><dt>Error</dt><dd className="bad">{p.error}</dd></>)}
+    </dl>
+  );
+}
+
 function IxsVaultsPanel() {
-  const [snap, setSnap] = useState<IxsSnapshot | null>(null);
+  const [snap, setSnap] = useState<(IxsSnapshot & { position?: Position }) | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     fetch("/api/allocate")
@@ -947,6 +969,12 @@ function IxsVaultsPanel() {
         <h2>IXS vaults</h2>
         {snap && <span className={`badge ${snap.source === "live" ? "live" : "recorded"}`}>{snap.source === "live" ? "live read" : "recorded snapshot"}</span>}
       </div>
+      {snap?.position && (
+        <div className="panel-body position-body">
+          <div className="k">Standing position · real USDC, signed with the agent&rsquo;s key</div>
+          <PositionRows p={snap.position} />
+        </div>
+      )}
       <div className="panel-body" style={{ padding: 0 }}>
         {!snap && !failed && <div className="feed-empty">Reading IXS…</div>}
         {failed && <div className="feed-empty">IXS could not be read.</div>}

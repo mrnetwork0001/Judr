@@ -33,7 +33,7 @@ const USDC_BY_NETWORK: Record<Network, Address> = {
 };
 export const USDC: Address = USDC_BY_NETWORK[NETWORK];
 export const USDC_DECIMALS = 6;
-const AGENT_NAME = process.env.CDP_AGENT_NAME ?? `judr-escrow-agent-${NETWORK}`;
+export const AGENT_NAME = process.env.CDP_AGENT_NAME ?? `judr-escrow-agent-${NETWORK}`;
 
 /**
  * Payout caps. A public demo that pays whoever wins a case is a faucet unless

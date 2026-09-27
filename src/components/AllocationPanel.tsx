@@ -87,7 +87,7 @@ export default function AllocationPanel({
           </>
         ) : (
           <p className="alloc-why">
-            The escrow is held as USDC in the agent&rsquo;s wallet. Ask the agent where it should sit: it reads IXS&rsquo;s live vault list and proposes a vault or cash, and the policy decides. The deposit itself is built, not sent - the agent&rsquo;s wallet lives on Base and the IXS vaults are on Avalanche and BSC.
+            The escrow is held as USDC in the agent&rsquo;s wallet. Ask the agent where it should sit: it reads IXS&rsquo;s live vault list and proposes a vault or cash, and the policy decides. Per-case deposits are not sent: the vault takes 100 USDC minimum and IXS finalises requests in hours to days, so the agent keeps one standing position in the Avalanche vault instead, and its live state is shown below.
           </p>
         )}
 
