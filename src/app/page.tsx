@@ -17,8 +17,9 @@ export const metadata: Metadata = {
     "Judr arbitrates disputes over escrowed real-world assets with a bounded reasoning graph on SERV: a verdict with a complete audit trail, and a vault that settles against it after an appeal window.",
 };
 
-// The escrow section reads IXS's vault list; refresh it with the page every
-// ten minutes rather than on every request.
+// The escrow section reads IXS's vault list and the agent's vault position,
+// which need the runtime keys; render per request and let the in-memory
+// caches (a minute for the position, ten for the list) carry the load.
 export const dynamic = "force-dynamic";
 
 export default function LandingPage() {
