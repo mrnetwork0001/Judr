@@ -1412,8 +1412,10 @@ button:disabled {
   text-decoration: none;
 }
 
-.wordmark-app .mark {
-  color: var(--accent);
+.wordmark-app img {
+  display: block;
+  height: 26px;
+  width: auto;
 }
 
 .app-tagline {
@@ -1780,8 +1782,8 @@ button:disabled {
     -webkit-backdrop-filter: blur(14px) saturate(1.1);
     border-bottom: 1px solid var(--border);
   }
-  .app-topbar .wordmark-app {
-    font-size: 20px;
+  .app-topbar .wordmark-app img {
+    height: 22px;
   }
   .app-topbar-page {
     flex: 1;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { IxsSnapshot } from "@/lib/ixs";
 import { accrue, formatMinor } from "@/lib/yield";
 import AllocationPanel from "./AllocationPanel";
@@ -322,8 +323,8 @@ export default function Dashboard({
   return (
     <div className="app-shell">
       <header className="app-topbar">
-        <Link href="/" className="wordmark-app">
-          <span className="mark">⚖</span> Judr
+        <Link href="/" className="wordmark-app" aria-label="Judr">
+          <Image src="/brand/judr-header.png" alt="Judr" width={720} height={202} unoptimized priority />
         </Link>
         <span className="app-topbar-page">{PAGES.find((p) => p.id === page)?.label}</span>
         <button
@@ -344,8 +345,8 @@ export default function Dashboard({
 
       <aside id="app-drawer" className={`app-side ${menuOpen ? "open" : ""}`}>
         <div className="app-brand">
-          <Link href="/" className="wordmark-app">
-            <span className="mark">⚖</span> Judr
+          <Link href="/" className="wordmark-app" aria-label="Judr">
+            <Image src="/brand/judr-header.png" alt="Judr" width={720} height={202} unoptimized priority />
           </Link>
           <div className="app-tagline">Arbitration for escrowed RWAs</div>
           <button type="button" className="drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">

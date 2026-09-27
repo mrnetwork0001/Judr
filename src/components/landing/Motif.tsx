@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 /*
  * The small hand-set details that make the landing page Judr's own: the scales
@@ -37,31 +38,6 @@ export function FigCaption({ label, children }: { label: string; children: React
  * The mark: a balance whose beam is level and whose pans hang from it. Level
  * rather than tipped, because the claim is that the decision is reached rather
  * than assumed.
- */
-export function ScalesMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      <path
-        d="M12 3v17M7.5 20.5h9M4 7.5h16M12 5.2 4 7.5m8-2.3 8 2.3"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-      <path
-        d="M1 14.2 4 7.5l3 6.7a3 3 0 0 1-6 0Zm16 0L20 7.5l3 6.7a3 3 0 0 1-6 0Z"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-/**
- * A hairline that lifts into a balance at its centre: beam, post, and two pans
- * hanging level. The beam sits on the rule's own baseline so the line appears
- * to pass through the glyph. One pan is filled, so the mark reads at small
- * sizes. Decorative.
  */
 export function ScaleRule({ className }: { className?: string }) {
   return (
@@ -131,9 +107,8 @@ export function ArrowUpRight({ className }: { className?: string }) {
 
 export function Wordmark({ href = "/" }: { href?: string }) {
   return (
-    <Link className="wordmark" href={href}>
-      <ScalesMark />
-      <b>Judr</b>
+    <Link className="wordmark" href={href} aria-label="Judr">
+      <Image src="/brand/judr-header.png" alt="Judr" width={720} height={202} unoptimized priority />
     </Link>
   );
 }

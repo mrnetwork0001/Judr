@@ -330,17 +330,14 @@
   color: var(--text);
 }
 
-.wordmark svg {
-  width: 26px;
-  height: 26px;
-  color: var(--accent);
+.wordmark img {
+  display: block;
+  height: 30px;
+  width: auto;
 }
 
-.wordmark b {
-  font-family: var(--display);
-  font-size: 25px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+.lp-footer .wordmark img {
+  height: 26px;
 }
 
 /* ---------------------------------------------------------------- */
@@ -805,9 +802,9 @@
 }
 
 .closing-mark {
-  width: 40px;
-  height: 40px;
-  color: var(--accent);
+  display: block;
+  width: 58px;
+  height: auto;
   margin-bottom: 22px;
 }
 

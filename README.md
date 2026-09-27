@@ -1,3 +1,5 @@
+<p align="center"><img src="public/brand/judr-header.png" alt="Judr" width="280"></p>
+
 # Judr - Autonomous Arbitration for Tokenized RWA Escrow
 
 [![CI](https://github.com/mrnetwork0001/Judr/actions/workflows/ci.yml/badge.svg)](https://github.com/mrnetwork0001/Judr/actions/workflows/ci.yml)

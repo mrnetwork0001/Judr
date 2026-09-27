@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ScalesMark } from "./Motif";
+import Image from "next/image";
 
 export default function ClosingCta() {
   return (
@@ -7,7 +7,7 @@ export default function ClosingCta() {
       <div className="lp-wrap">
         <div className="closing-band closing-grid">
         <div>
-          <ScalesMark className="closing-mark" />
+          <Image className="closing-mark" src="/brand/judr-mark.png" alt="" width={240} height={194} unoptimized />
           <h2 id="closing-title">
             Watch it decide. <em>It takes about ten seconds.</em>
           </h2>
