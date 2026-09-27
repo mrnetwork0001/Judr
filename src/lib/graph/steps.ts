@@ -26,8 +26,7 @@ import {
   CLAIM_SCHEMA,
   CLAUSE_SET_SCHEMA,
   EVALUATION_SCHEMA,
-  VERDICT_SCHEMA,
-} from "./schema";
+  VERDICT_SCHEMA, verdictSchema } from "./schema";
 import type {
   ClassifiedClaim,
   ClauseSet,
@@ -179,8 +178,9 @@ export async function adjudicate(
   args: StepArgs & { temperature?: number },
 ) {
   const { temperature = 0, ...rest } = args;
+  const eligible = evaluation.findings.filter((f) => f.finding !== "indeterminate").map((f) => f.clause_id);
   return completeTyped<Verdict>({
-    schema: VERDICT_SCHEMA,
+    schema: verdictSchema(eligible),
     schemaName: "verdict",
     temperature,
     ...rest,
@@ -208,6 +208,9 @@ Rules:
 
 IN DISPUTE
 ${claim.summary}
+
+ELIGIBLE AS DECISIVE (determinate findings only)
+${eligible.length ? eligible.join(", ") : "none - every finding is indeterminate; say so and decide on the burden"}
 
 CLAUSE FINDINGS
 ${evaluation.findings

@@ -90,6 +90,26 @@ export const VERDICT_SCHEMA = obj({
   rationale: str("The reasoning, referring to clauses by their label."),
 });
 
+/**
+ * The verdict schema with decisive_clauses pinned to the clauses whose finding
+ * is determinate. Strict structured output then cannot name an indeterminate
+ * clause as decisive, which is the verifier's rule stated up front rather
+ * than after the fact. With no eligible clause the base schema is used and
+ * the verifier does its job.
+ */
+export function verdictSchema(eligible: string[]): JsonSchema {
+  if (eligible.length === 0) return VERDICT_SCHEMA;
+  return obj({
+    winner: { type: "string", enum: ["plaintiff", "defendant"] },
+    award_basis: str("Why this party is entitled to the escrowed funds."),
+    decisive_clauses: arr(
+      { type: "string", enum: eligible, description: "A clause id with a determinate finding." },
+      "At least one. Only clauses found satisfied or breached are eligible.",
+    ),
+    rationale: str("The reasoning, referring to clauses by their label."),
+  });
+}
+
 export const GUARD_SCHEMA = obj({
   flags: arr(
     obj({

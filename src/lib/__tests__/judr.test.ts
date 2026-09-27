@@ -9,7 +9,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { validate, VERDICT_SCHEMA, CLAUSE_SET_SCHEMA } from "../graph/schema";
+import { validate, VERDICT_SCHEMA, CLAUSE_SET_SCHEMA, verdictSchema } from "../graph/schema";
 import { verify, deriveConfidence, verdictDigest, tallyConsensus } from "../graph/run";
 import { screenHeuristic } from "../guard";
 import { DEMO_DISPUTE, POISONED_EVIDENCE, demoDispute } from "../fixtures";
@@ -276,4 +276,12 @@ test("verdict digest ignores prose that does not change the decision", () => {
   const a = verdictDigest(DEMO_DISPUTE, GOOD_VERDICT);
   const b = verdictDigest(DEMO_DISPUTE, { ...GOOD_VERDICT, rationale: "different wording" });
   assert.equal(a, b);
+});
+
+test("the verdict schema pins decisive clauses to determinate findings", () => {
+  const schema = verdictSchema(["c1", "c2"]);
+  const base = { winner: "plaintiff", award_basis: "x", rationale: "y" };
+  assert.deepEqual(validate({ ...base, decisive_clauses: ["c1"] }, schema), []);
+  assert.ok(validate({ ...base, decisive_clauses: ["c3"] }, schema).length > 0, "an indeterminate clause cannot be decisive");
+  assert.equal(verdictSchema([]), VERDICT_SCHEMA, "with nothing eligible the base schema stands and the verifier decides");
 });
