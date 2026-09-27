@@ -125,7 +125,13 @@ reviewer's decision, one by the appeal window closing:
 - [`0x2b74cd11…`](https://sepolia.basescan.org/tx/0x2b74cd1172d1da7556785be6399afd72f94ac7690789779ae012db6448da6bba) — 0.10 USDC to the winning party after human review
 - [`0xca9697d8…`](https://sepolia.basescan.org/tx/0xca9697d83ebd6a472ea35d7846d79834d52821e4007565b529a25424a8613c1e) — 0.10 USDC to the winning party after the window closed unchallenged
 
-The agent is [`0x2469e706…5D58`](https://sepolia.basescan.org/address/0x2469e706537Eb28A12437e57F00dc823CC295D58).
+The first mainnet settlement, on Base, 27 September 2026, through the
+vercel.app address, after the window closed unchallenged:
+
+- [`0x80234fa7…`](https://basescan.org/tx/0x80234fa706823f069f67967cc93fd9916c5e09b45685f422a633c0ca6c473e2b) — 0.10 USDC to the winning party's signed-in wallet
+
+The mainnet agent is [`0xD372384F…07A5`](https://basescan.org/address/0xD372384F8c99A2Fb549D01E8BB40Eb206be507A5);
+the testnet agent is [`0x2469e706…5D58`](https://sepolia.basescan.org/address/0x2469e706537Eb28A12437e57F00dc823CC295D58).
 `node scripts/e2e-gating.mjs` reproduces both against a running app with
 three throwaway keys; `scripts/agent-transfers.mjs` lists the agent's transfers
 from the chain's logs.
