@@ -290,17 +290,16 @@ mechanism and almost none has one that scales below the cost of a lawyer.
 
 ## What is real and what is not
 
-| | Real | Not, and labelled |
+| | Real | Not real, and labelled as such |
 |---|---|---|
-| Decisions | Live on SERV, every run. Without a key the app refuses with a 503 and says why. | There is no recorded or replay mode |
-| Escrow and payouts | Real USDC from a CDP wallet on Base, hash shown per case | |
-| Identity | Wallet signatures verified server-side | No accounts, no passwords |
-| IXS vaults | Live list, live yields, on-chain reads, a real 100 USDC position requested by the agent and read back from the chain | Per-case deposits are **not sent**; yield is a **projection** until IXS finalises; fee taken is zero |
-| Evidence guard | Deterministic patterns plus a live model pass | |
-| Sample case | The parties and facts are written | The reasoning about them is not |
-| The landing page's specimens | Fragments of a real live run saved to [src/lib/sample-run.json](src/lib/sample-run.json) | |
-
----
+| Decisions | Live on SERV, every run. Without a key the app refuses with a 503 and says why. There is no recorded or replay mode. | Nothing |
+| Escrow and payouts | Real USDC from a CDP wallet on Base mainnet, hash shown per case. A verdict the verifier rejects goes to the reviewer instead of the payout window. | Nothing |
+| Identity | Wallet signatures verified server-side. No accounts, no passwords. | Nothing |
+| IXS vaults | Live list, live yields, on-chain reads, and a real 100 USDC position requested by the agent and read back from the chain | Per-case deposits are **not sent**; per-case yield is a **projection** at the reported rate; fee taken is zero |
+| Evidence guard | Deterministic patterns plus a live model pass, on every run | Nothing |
+| Sample case | Every decision about it, live | The parties and facts are an example, written for the demo. Bring your own case for real facts. |
+| The landing page | The hero replays a real saved run with its real step timings; the vault table and the agent's position are read live when the page renders | The replay runs at about four times speed |
+| The demo film | Filmed on the live app: the decision, the wallet signature, the mainnet payout and the vault position are real and in shot | Footage is cut and sped up in places; the narration is synthetic |
 
 ## Threat model
 
