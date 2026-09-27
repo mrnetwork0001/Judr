@@ -5,4 +5,10 @@
  */
 import type { RecordedRequest } from "./ixs-position";
 
-export const RECORDED_REQUEST: RecordedRequest | null = null;
+export const RECORDED_REQUEST: RecordedRequest | null = {
+  "txHash": "0x13718493f700f26c3d3acae254d5a4ff0bf5d76d5193b023feddb797854c4c0c",
+  "requestId": "10",
+  "assetsUsdc": "100",
+  "requestedAt": "2026-09-27T12:24:57.540Z",
+  "block": 96258448
+};

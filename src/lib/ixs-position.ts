@@ -48,6 +48,8 @@ const SHARE_DECIMALS = 18;
 
 const VAULT_VIEWS = parseAbi([
   "function convertToAssets(uint256 shares) view returns (uint256)",
+  "function pendingDepositRequest(uint256 requestId, address controller) view returns (uint256)",
+  "function claimableDepositRequest(uint256 requestId, address controller) view returns (uint256)",
   "function minDepositAssets() view returns (uint256)",
   "function paused() view returns (bool)",
   "event DepositRequested(uint256 indexed id, address indexed controller, uint256 assets, uint256 subscribeFeeBpsAtRequest)",
@@ -156,6 +158,18 @@ export async function readPosition(): Promise<Position> {
       client.readContract({ address: POSITION_VAULT.address, abi: VAULT_VIEWS, functionName: "paused" }),
     ]);
     const position = await readUserPosition(client, POSITION_VAULT, agent, state.assetAddress ?? USDC);
+    // The SDK finds the request id through IXS's subgraph, which can lag the
+    // chain by hours; with the id on record, ask the vault directly and keep
+    // the larger answer.
+    if (request?.requestId) {
+      const id = BigInt(request.requestId);
+      const [pending, claimable] = await Promise.all([
+        client.readContract({ address: POSITION_VAULT.address, abi: VAULT_VIEWS, functionName: "pendingDepositRequest", args: [id, agent] }),
+        client.readContract({ address: POSITION_VAULT.address, abi: VAULT_VIEWS, functionName: "claimableDepositRequest", args: [id, agent] }),
+      ]);
+      if (pending > (position.pendingDeposit ?? 0n)) position.pendingDeposit = pending;
+      if (claimable > (position.claimableDeposit ?? 0n)) position.claimableDeposit = claimable;
+    }
     const shares = position.shareBalance ?? 0n;
     const value = (shares * sharePrice) / 10n ** BigInt(SHARE_DECIMALS);
     const result: Position = {

@@ -22,8 +22,9 @@ Too small to litigate. Too big to walk away from. That is the gap Judr fills.
 | **Live app** | [tryjudr.vercel.app](https://tryjudr.vercel.app) (origin [judr.38.49.216.120.sslip.io](https://judr.38.49.216.120.sslip.io)) |
 | **Video** | [docs/demo.mp4](docs/demo.mp4) · animated tour below |
 | **First mainnet settlement** | [0x80234fa7…](https://basescan.org/tx/0x80234fa706823f069f67967cc93fd9916c5e09b45685f422a633c0ca6c473e2b) - 0.10 USDC to the winning party, Base, 27 Sep 2026 |
+| **Standing IXS position** | [0x13718493…](https://snowscan.xyz/tx/0x13718493f700f26c3d3acae254d5a4ff0bf5d76d5193b023feddb797854c4c0c) - 100 USDC requested into the IX High Yield Bond vault on Avalanche, request 10, 27 Sep 2026 |
 | **Cost of a decision** | $0.02 to $0.03 and about 25 seconds on SERV, against $3,000+ and 6 to 12 weeks for a human arbitrator |
-| **Nothing simulated** | Live SERV reasoning or no decision at all; real USDC; wallets proven by signature; on-chain payouts with the hash in the case |
+| **Nothing simulated** | Live SERV reasoning or no decision at all; real USDC in escrow and in the vault; wallets proven by signature; on-chain payouts with the hash in the case |
 
 ![Judr arbitrating a dispute live on SERV: evidence screened, a tampered document quarantined, seven typed steps, a verdict with derived confidence and its price](docs/demo.gif)
 
@@ -105,7 +106,7 @@ the outcome.
 3. **Arbitrate.** The reasoning graph runs live on SERV and streams every step to the browser. The verdict is *posted*, not executed.
 4. **Appeal window.** The vault refuses to release until the window closes. Only the losing party's signed-in wallet can appeal. An appeal is terminal for the agent: it halts settlement and hands the case to a human reviewer, who upholds or overturns with a written reason that goes on the record.
 5. **Settle.** After the window, or after review, the agent sends the escrow to the winner as an ERC-20 transfer. The case is locked while the payout is in flight, so two release calls cannot both reach the chain. The transaction hash is written to the case.
-6. **Allocation, in parallel.** While the case is open a SERV step proposes where the escrow should sit among IXS's live yield vaults, and a deterministic policy accepts or refuses. The deposit is built as ERC-7540 call data and shown; in this build it is not sent.
+6. **Allocation, in parallel.** While the case is open a SERV step proposes where the escrow should sit among IXS's live yield vaults, and a deterministic policy accepts or refuses. The agent holds a standing position in the permissionless Avalanche vault, read live from the chain, and cases account against it; no per-case deposit is sent, because the vault's contract takes 100 USDC minimum and IXS finalises requests hours to days later.
 
 Every transition above is a pure function on the case record, tested without
 the network, and the API route is a thin wrapper that moves money between
@@ -253,8 +254,9 @@ either party's pocket. The time the money was stuck pays for the decision.
 - **Live vault list.** IXS's public API gives the vaults, their chain, whether they require a whitelist, and the trailing-twelve-month yield IXS reports. For the vault IXS's SDK knows, total assets and share price are read on-chain over Avalanche's public RPC. The list is cached for ten minutes; if the API is unreachable a recorded snapshot is used and labelled as such in the UI.
 - **A SERV allocation step** sees that list and the expected dispute length and proposes a vault, or proposes holding cash, with its risks stated.
 - **A deterministic policy** accepts or refuses: a vault that requires a whitelist the agent is not on, a paused vault, a rate under 0.5%, or a proposal with no stated risk is refused, and the refusal is written to the case log. The model proposes; the rule decides. Re-evaluating to the same vault keeps the accrual clock running rather than resetting it.
-- **Transactions are built with `@ixswap1/vault-agent-sdk`** as ERC-7540 `requestDeposit` and `requestRedeem` call data and shown in the trail exactly as a signer would send them. Judr holds no IXS key and signs nothing.
-- **At release** the yield the escrow would have earned at the vault's live rate is shown as a projection, and the fee model is applied to it.
+- **A standing position, signed by the agent.** The vault's verified contract sets a 100 USDC minimum, forwards deposits to custody at once, and leaves finalisation to an IXS operator, hours to days by its history, so a dispute that lasts minutes cannot hold its own position. The agent therefore holds one: 100 USDC requested on 27 September 2026 with its CDP key over Avalanche ([approve](https://snowscan.xyz/tx/0xc4c5c0f1306bfaef0f9b685f7e356dbc9b26bf7406262a7690b7c365fa3375c0), [requestDeposit](https://snowscan.xyz/tx/0x13718493f700f26c3d3acae254d5a4ff0bf5d76d5193b023feddb797854c4c0c), request id 10), built with `@ixswap1/vault-agent-sdk`. The app reads it back from the chain: pending with custody, then shares at the indicative price once IXS finalises.
+- **Per-case redemptions are built, not sent.** The `requestRedeem` call data for a case is shown in the trail exactly as a signer would send it; cases account against the standing position instead of queueing their own multi-day redemption.
+- **At release** the yield the escrow would have earned at the vault's live rate is shown as a projection, and the fee model is applied to it. This instrument prices at finalisation, so accrual is not observable on-chain between requests.
 
 **The fee model**
 
@@ -282,7 +284,7 @@ mechanism and almost none has one that scales below the cost of a lawyer.
 |---|---|---|
 | **Open Track** | SERV Reasoning API as the engine of a six-step graph with strict JSON-schema outputs, streamed to the browser | Every decision, every allocation, every guard pass runs live; cost per step is computed from returned usage at published rates |
 | **Coinbase AgentKit** | `CdpEvmWalletProvider` over a named CDP account; ERC-20 transfers via `sendTransaction`; faucet on testnet; receipt awaited via the provider's public client | Real USDC payouts on Base mainnet and Sepolia, hashes above; caps and a settling lock around every transfer |
-| **IXS RWA Vaults** | Live vault list from IXS's API, on-chain state via `@ixswap1/vault-agent-sdk`, ERC-7540 deposit and redeem call data, a SERV allocation step under a deterministic policy | The list, the reads, the decision and the policy are live; the deposit is built and shown but not sent |
+| **IXS RWA Vaults** | Live vault list from IXS's API, on-chain state via `@ixswap1/vault-agent-sdk`, a standing position requested with the agent's CDP key over Avalanche, ERC-7540 redeem call data, a SERV allocation step under a deterministic policy | The list, the reads, the decision, the policy and the 100 USDC position are real; per-case deposits and redemptions are built and shown, not sent |
 
 ---
 
@@ -293,7 +295,7 @@ mechanism and almost none has one that scales below the cost of a lawyer.
 | Decisions | Live on SERV, every run. Without a key the app refuses with a 503 and says why. | There is no recorded or replay mode |
 | Escrow and payouts | Real USDC from a CDP wallet on Base, hash shown per case | |
 | Identity | Wallet signatures verified server-side | No accounts, no passwords |
-| IXS vaults | Live list, live yields, on-chain reads, unsigned transactions built with IXS's SDK | The deposit is **not executed**; yield is a **projection**; fee taken is zero |
+| IXS vaults | Live list, live yields, on-chain reads, a real 100 USDC position requested by the agent and read back from the chain | Per-case deposits are **not sent**; yield is a **projection** until IXS finalises; fee taken is zero |
 | Evidence guard | Deterministic patterns plus a live model pass | |
 | Sample case | The parties and facts are written | The reasoning about them is not |
 | The landing page's specimens | Fragments of a real live run saved to [src/lib/sample-run.json](src/lib/sample-run.json) | |
@@ -395,6 +397,7 @@ status card shows with USDC and a little ETH, and keep the caps.
 | `JUDR_CONSENSUS_RUNS` | `3` | Independent adjudications per verdict |
 | `JUDR_APPEAL_WINDOW_MS` | `20000` | Days in production; seconds for a demo |
 | `SITE_URL` | `http://localhost:3000` | Absolute URL for social cards |
+| `AVALANCHE_RPC_URL` | Avalanche's public RPC | Where the IXS position is read |
 
 ---
 
@@ -422,6 +425,7 @@ Against a running app, with real keys:
 | `scripts/e2e-race.mjs` | Five concurrent release calls; exactly one payout |
 | `scripts/agent-diag.mjs` | Agent balances, a faucet round, balances again |
 | `scripts/agent-transfers.mjs` | Every transfer the agent has made, from the chain's logs |
+| `scripts/ixs-deposit.mjs` | Requests the standing deposit into the IXS vault with the agent's key and records the request. Real money; run once. |
 
 ---
 
@@ -477,6 +481,8 @@ pick up the Dockerfile from the repo.
 | [src/lib/session.ts](src/lib/session.ts) | Cookie-bound sessions |
 | [src/lib/custom.ts](src/lib/custom.ts) | Custom disputes: size caps, run caps |
 | [src/lib/ixs.ts](src/lib/ixs.ts) | IXS: live vault list, on-chain reads, unsigned ERC-7540 transactions |
+| [src/lib/ixs-position.ts](src/lib/ixs-position.ts) | The agent's standing vault position: CDP-signed Avalanche transactions, live reads |
+| [src/lib/ixs-record.ts](src/lib/ixs-record.ts) | The deposit request as it was sent |
 | [src/lib/yield.ts](src/lib/yield.ts) | Yield accrual and the fee split |
 | [src/lib/fixtures.ts](src/lib/fixtures.ts) | The demo dispute and the tampered document |
 | [src/lib/types.ts](src/lib/types.ts) | Domain types |
@@ -493,7 +499,7 @@ scroll-driven helix, loaded after hydration and only there.
 
 ## Honest limits
 
-- **The IXS deposit is not executed.** The agent's wallet is on Base; IXS's permissionless vaults are on Avalanche and BSC, and IXS's testnets have no public test USDC. The allocation decision is live, the policy is real, the call data is built with IXS's SDK and shown, and none of it is sent. Yield is therefore a projection, the fee taken is zero, and the payout is principal.
+- **The position is standing, not per case.** The agent holds 100 USDC in the Avalanche vault; individual cases do not deposit or redeem, because the vault takes 100 USDC minimum and IXS finalises requests hours to days later. Per-case yield is a projection at the reported rate, the fee taken is zero, and the payout is principal. Finalisation of the position is on IXS's schedule; until then the chain reports it as pending with custody.
 - **The escrow is custodial.** The agent's CDP wallet holds the funds. The case record is a state machine in the server, not a contract on-chain.
 - **State is in memory.** Cases, caps and the settling lock reset with the process and do not survive a restart or a second instance.
 - **The escrow is small and capped.** Real USDC, but pocket money, by design.
@@ -506,7 +512,7 @@ scroll-driven helix, loaded after hydration and only there.
 ## Roadmap
 
 1. **Escrow as a contract.** Move the case record on-chain so the appeal window and the release condition are enforced by code the parties can read, with the agent as one signer among several.
-2. **Execute the IXS allocation.** A signer on Avalanche or BSC for the escrow's share, with the redemption requested at verdict time so principal is back on Base before the window closes.
+2. **Manage the position.** Claim shares when IXS finalises, redeem and top up automatically against the case book, and settle each case's share of realised yield on-chain instead of as a projection.
 3. **Durable state.** A small store for cases and caps so the service survives restarts and can run more than one instance.
 4. **Documents.** PDF and image evidence through OCR into the same guard.
 5. **Integration surface.** A hosted API and an MCP server so escrow platforms and agents can open a case, post evidence and subscribe to the verdict.

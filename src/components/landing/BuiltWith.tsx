@@ -14,7 +14,7 @@ const STACK = [
   {
     term: "IXS vaults",
     detail:
-      "Where the escrow would earn while a dispute is open. The vault list, whitelist status and reported yield are read live from IXS's API; totals and share price for the Avalanche vault are read on-chain; subscription and redemption requests are built with IXS's own agent SDK as unsigned ERC-7540 call data, shown and not sent.",
+      "Where the escrow earns while a dispute is open. The vault list, whitelist status and reported yield are read live from IXS's API; totals and share price for the Avalanche vault are read on-chain; and the agent holds a standing 100 USDC position in the permissionless Avalanche vault, requested with its own key through IXS's SDK and read back from the chain. Per-case deposits are accounted against it, not sent.",
   },
   {
     term: "Next.js 16 · React 19",
