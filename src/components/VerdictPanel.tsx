@@ -210,11 +210,21 @@ function Settlement({
     return (
       <div className="settlement">
         <div className="note">
-          An appeal was lodged inside the window. Release is halted and the
-          dispute is escalated to human review - Judr does not overrule an appeal.
+          {vault.escalated ? (
+            <>
+              The verifier rejected this verdict: {vault.escalated.issues.join(" ")} Release is
+              halted and the case goes to human review - Judr does not settle on a verdict it
+              could not verify.
+            </>
+          ) : (
+            <>
+              An appeal was lodged inside the window. Release is halted and the dispute is
+              escalated to human review - Judr does not overrule an appeal.
+            </>
+          )}
         </div>
         <span className="badge alert">
-          <span className="dot" /> Halted
+          <span className="dot" /> {vault.escalated ? "Halted · verification failed" : "Halted"}
         </span>
       </div>
     );

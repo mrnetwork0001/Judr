@@ -104,7 +104,7 @@ the outcome.
 1. **Open and fund.** A case is opened for a sample or custom dispute. The escrow agent confirms it holds the escrow amount in USDC on Base (on testnet it tops itself up from Coinbase's faucet first). If it does not, the case refuses to open and says so.
 2. **Parties sign in.** A visitor connects a wallet and signs a message naming the case, the role (Contractor, Client or Reviewer) and their session. The server verifies the signature. One address holds one role at a time.
 3. **Arbitrate.** The reasoning graph runs live on SERV and streams every step to the browser. The verdict is *posted*, not executed.
-4. **Appeal window.** The vault refuses to release until the window closes. Only the losing party's signed-in wallet can appeal. An appeal is terminal for the agent: it halts settlement and hands the case to a human reviewer, who upholds or overturns with a written reason that goes on the record.
+4. **Appeal window.** The vault refuses to release until the window closes. Only the losing party's signed-in wallet can appeal. An appeal is terminal for the agent: it halts settlement and hands the case to a human reviewer, who upholds or overturns with a written reason that goes on the record. A verdict the verifier rejected never gets a window at all: the case goes straight to the reviewer.
 5. **Settle.** After the window, or after review, the agent sends the escrow to the winner as an ERC-20 transfer. The case is locked while the payout is in flight, so two release calls cannot both reach the chain. The transaction hash is written to the case.
 6. **Allocation, in parallel.** While the case is open a SERV step proposes where the escrow should sit among IXS's live yield vaults, and a deterministic policy accepts or refuses. The agent holds a standing position in the permissionless Avalanche vault, read live from the chain, and cases account against it; no per-case deposit is sent, because the vault's contract takes 100 USDC minimum and IXS finalises requests hours to days later.
 
@@ -307,7 +307,7 @@ mechanism and almost none has one that scales below the cost of a lawyer.
 | Threat | Control |
 |---|---|
 | Prompt injection through evidence | Deterministic screening before any model step, quarantine of high-severity hits, model pass status on the record |
-| A model that invents clauses or citations | Deterministic verifier resolves every cited id; a verdict on a phantom clause fails and confidence is capped |
+| A model that invents clauses or citations | Deterministic verifier resolves every cited id; a verdict on a phantom clause or an unsettled decisive clause fails, confidence is capped, and the case is escalated to the reviewer instead of the payout window |
 | Self-reported confidence | Confidence derived from three independent adjudications plus finding coverage; failed runs count against it |
 | Forged party or reviewer | Signed join messages naming case, role and session; verified with viem; one address, one role |
 | Appeal by the wrong party | Only the recorded losing party's address can appeal; only the recorded reviewer can decide |

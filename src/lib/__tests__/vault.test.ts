@@ -33,6 +33,7 @@ const RESULT = {
   disputeId: "judr-test",
   verdict: { winner: "plaintiff", decisive_clauses: ["c1"] },
   confidence: { score: 1 },
+  verification: { passed: true, issues: [] },
   digest: "abc123",
 } as unknown as ArbitrationResult;
 
@@ -161,4 +162,38 @@ test("a payout in flight blocks a second one until it completes or is aborted", 
   prepareRelease(sid);
   completeRelease(sid, PAID);
   assert.throws(() => prepareRelease(sid), /Already released/);
+});
+
+test("a verdict that fails verification is escalated to review, never released", () => {
+  const sid = `s-${Math.random()}`;
+  resetVault(sid);
+  raiseDispute(sid, "test");
+  const failed = {
+    ...RESULT,
+    verification: { passed: false, issues: [{ kind: "unsupported_claim", detail: "Clause \"c5\" is decisive but its finding is indeterminate." }] },
+  } as unknown as ArbitrationResult;
+  const v = postVerdict(sid, failed);
+  assert.equal(v.status, "appealed");
+  assert.equal(v.escalated?.by, "verifier");
+  assert.equal(v.verdict?.verified, false);
+  assert.match(v.events.at(-1)?.label ?? "", /Escalated by the verifier/);
+  assert.throws(() => prepareRelease(sid), /under appeal/);
+});
+
+test("a visitor's own case puts its title and parties on the record, keeping signed-in addresses", () => {
+  const sid = `s-${Math.random()}`;
+  resetVault(sid);
+  const bundle = {
+    vaultId: "x",
+    contract: { id: "k", title: "Photography Services Agreement", text: "1. Scope." },
+    claim: "late delivery",
+    plaintiff: { name: "R. Lindqvist (Photographer)", address: "" },
+    defendant: { name: "T. Okafor (Client)", address: "" },
+    evidence: [],
+  } as unknown as Parameters<typeof raiseDispute>[2];
+  const v = raiseDispute(sid, "test", bundle);
+  assert.equal(v.contractTitle, "Photography Services Agreement");
+  assert.equal(v.plaintiff.name, "R. Lindqvist (Photographer)");
+  assert.equal(v.defendant.name, "T. Okafor (Client)");
+  assert.equal(v.plaintiff.address, null);
 });

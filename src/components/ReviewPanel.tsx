@@ -70,7 +70,7 @@ export default function ReviewPanel({
     <div className="panel review-panel">
       <div className="panel-head">
         <h2>Human review</h2>
-        <span className="badge alert">appeal pending</span>
+        <span className="badge alert">{vault.escalated ? "verification failed" : "appeal pending"}</span>
       </div>
       <div className="panel-body">
         <p className="review-lead">

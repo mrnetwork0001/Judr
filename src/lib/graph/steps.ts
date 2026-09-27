@@ -148,6 +148,11 @@ For each clause:
    "breached"       - the record shows it was not.
    "indeterminate"  - the record does not settle it. Use this honestly; a wrong
                       confident finding is worse than an admitted gap.
+ - A clause whose outcome follows from another clause (payment on delivery,
+   release on acceptance, a reduction for lateness) is settled once that other
+   clause is: find it satisfied or breached accordingly and say which finding
+   it follows from. "indeterminate" is for gaps in the record, not for
+   consequences you can compute from findings you have already made.
  - Dates and deadlines are facts. Compute them. Business days exclude weekends.`,
       },
       {

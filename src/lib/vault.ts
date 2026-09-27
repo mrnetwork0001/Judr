@@ -26,6 +26,7 @@ export interface PartyRef {
   address: string | null;
 }
 import type { IxsVaultSummary, UnsignedTx } from "./ixs";
+import type { DisputeBundle } from "./types";
 import type { Role } from "./identity";
 import { accrue } from "./yield";
 import { formatMinor } from "./yield";
@@ -88,10 +89,15 @@ export interface Vault {
     payee: PartyRef;
     digest: string;
     confidence: number;
+    /** Whether the deterministic verifier accepted the verdict. */
+    verified: boolean;
+    issues: string[];
     postedAt: number;
     /** Funds may not move before this timestamp. */
     appealDeadline: number;
   };
+  /** Set when the verifier, not a party, sent the case to review. */
+  escalated?: { by: "verifier"; issues: string[] };
   releasedTo?: PartyRef;
   events: VaultEvent[];
   /** Where the escrow sits while the dispute is open. Absent means cash. */
@@ -228,7 +234,7 @@ export function resetVault(sessionId: string): Vault {
  * of an appeal: nothing Judr does afterwards may move the funds until a human
  * has looked.
  */
-export function raiseDispute(sessionId: string, reason: string): Vault {
+export function raiseDispute(sessionId: string, reason: string, bundle?: DisputeBundle): Vault {
   const vault = getVault(sessionId);
   if (vault.status === "released") throw new VaultError("Escrow already released.");
   if (vault.status === "appealed") {
@@ -236,6 +242,13 @@ export function raiseDispute(sessionId: string, reason: string): Vault {
   }
   if (vault.status === "verdict_posted") {
     throw new VaultError("A verdict is already posted and its appeal window is open.");
+  }
+  if (bundle) {
+    // A visitor's own case: the record carries their contract and parties.
+    // Signed-in addresses stay; only the names and the title follow the bundle.
+    vault.contractTitle = bundle.contract.title;
+    vault.plaintiff = { ...vault.plaintiff, name: bundle.plaintiff.name };
+    vault.defendant = { ...vault.defendant, name: bundle.defendant.name };
   }
   vault.status = "disputed";
   vault.events.push({ at: Date.now(), label: "Dispute raised", detail: reason });
@@ -386,7 +399,7 @@ export function postVerdict(sessionId: string, result: ArbitrationResult): Vault
   }
   const payee = vault[result.verdict.winner];
   const postedAt = Date.now();
-
+  const issues = result.verification.issues.map((i) => i.detail);
   vault.status = "verdict_posted";
   vault.verdict = {
     disputeId: result.disputeId,
@@ -394,14 +407,27 @@ export function postVerdict(sessionId: string, result: ArbitrationResult): Vault
     payee,
     digest: result.digest,
     confidence: result.confidence.score,
+    verified: result.verification.passed,
+    issues,
     postedAt,
     appealDeadline: postedAt + APPEAL_WINDOW_MS,
   };
   vault.events.push({
     at: postedAt,
     label: "Verdict posted by Judr",
-    detail: `In favour of ${payee.name} · digest ${result.digest.slice(0, 16)}… · appeal window open`,
+    detail: `In favour of ${payee.name} · digest ${result.digest.slice(0, 16)}… · ${result.verification.passed ? "verified · appeal window open" : "verification failed"}`,
   });
+  if (!result.verification.passed) {
+    // Judr does not settle on a verdict it could not verify. The case goes
+    // to the reviewer the same way an appeal does: no window, no payout.
+    vault.status = "appealed";
+    vault.escalated = { by: "verifier", issues };
+    vault.events.push({
+      at: postedAt,
+      label: "Escalated by the verifier",
+      detail: `${issues.length} issue${issues.length === 1 ? "" : "s"} - release halted until a reviewer decides`,
+    });
+  }
   return vault;
 }
 
