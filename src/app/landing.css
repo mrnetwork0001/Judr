@@ -238,7 +238,7 @@
   }
 }
 
-.lp-nav nav {
+.lp-nav-inner nav {
   display: none;
   align-items: center;
   gap: 32px;
@@ -247,12 +247,12 @@
 }
 
 @media (min-width: 900px) {
-  .lp-nav nav {
+  .lp-nav-inner nav {
     display: flex;
   }
 }
 
-.lp-nav nav a {
+.lp-nav-inner nav a {
   font-size: 14px;
   color: var(--text-dim);
   text-decoration: none;
@@ -260,7 +260,7 @@
   transition: color 0.15s;
 }
 
-.lp-nav nav a:hover {
+.lp-nav-inner nav a:hover {
   color: var(--text);
   text-decoration: underline;
 }
